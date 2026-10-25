@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- 自作のテスト用パブリケーションモジュール（券売機 操作マニュアル）。 -->
+<pm xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:noNamespaceSchemaLocation="http://www.s1000d.org/S1000D_7/xml_schema_flat/pm.xsd">
+  <identAndStatusSection>
+    <pmAddress>
+      <pmIdent>
+        <pmCode modelIdentCode="KENBAIKI" pmIssuer="K0001" pmNumber="OPM01" pmVolume="00"/>
+        <language languageIsoCode="ja" countryIsoCode="JP"/>
+        <issueInfo issueNumber="001" inWork="00"/>
+      </pmIdent>
+      <pmAddressItems>
+        <issueDate year="2026" month="10" day="25"/>
+        <pmTitle>券売機 操作マニュアル</pmTitle>
+      </pmAddressItems>
+    </pmAddress>
+    <pmStatus issueType="new">
+      <security securityClassification="01"/>
+      <responsiblePartnerCompany enterpriseCode="K0001"/>
+      <originator enterpriseCode="K0001"/>
+      <applic><displayText><simplePara>All</simplePara></displayText></applic>
+      <brexDmRef><dmRef><dmRefIdent>
+        <dmCode modelIdentCode="KENBAIKI" systemDiffCode="A" systemCode="00" subSystemCode="0"
+          subSubSystemCode="0" assyCode="00" disassyCode="00" disassyCodeVariant="A" infoCode="022"
+          infoCodeVariant="A" itemLocationCode="D"/>
+      </dmRefIdent></dmRef></brexDmRef>
+      <qualityAssurance><unverified/></qualityAssurance>
+    </pmStatus>
+  </identAndStatusSection>
+  <content>
+    <pmEntry>
+      <pmEntryTitle>操作</pmEntryTitle>
+      <dmRef><dmRefIdent>
+        <dmCode modelIdentCode="KENBAIKI" systemDiffCode="A" systemCode="10" subSystemCode="2"
+          subSubSystemCode="0" assyCode="00" disassyCode="00" disassyCodeVariant="A" infoCode="040"
+          infoCodeVariant="A" itemLocationCode="D"/>
+      </dmRefIdent></dmRef>
+      <pmEntry>
+        <pmEntryTitle>保守</pmEntryTitle>
+        <dmRef><dmRefIdent>
+          <dmCode modelIdentCode="KENBAIKI" systemDiffCode="A" systemCode="10" subSystemCode="2"
+            subSubSystemCode="0" assyCode="00" disassyCode="00" disassyCodeVariant="A" infoCode="520"
+            infoCodeVariant="A" itemLocationCode="A"/>
+        </dmRefIdent></dmRef>
+        <dmRef><dmRefIdent>
+          <dmCode modelIdentCode="KENBAIKI" systemDiffCode="A" systemCode="99" subSystemCode="0"
+            subSubSystemCode="0" assyCode="00" disassyCode="00" disassyCodeVariant="A" infoCode="520"
+            infoCodeVariant="A" itemLocationCode="A"/>
+        </dmRefIdent></dmRef>
+      </pmEntry>
+    </pmEntry>
+  </content>
+</pm>

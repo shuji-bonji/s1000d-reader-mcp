@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- 自作のテスト用 ACT（券売機 KENBAIKI）。機種 model、版 version、設置形態 site。 -->
+<dmodule xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:noNamespaceSchemaLocation="http://www.s1000d.org/S1000D_7/xml_schema_flat/appliccrossreftable.xsd">
+  <identAndStatusSection>
+    <dmAddress>
+      <dmIdent>
+        <dmCode modelIdentCode="KENBAIKI" systemDiffCode="A" systemCode="00" subSystemCode="0"
+          subSubSystemCode="0" assyCode="00" disassyCode="00" disassyCodeVariant="A" infoCode="00W"
+          infoCodeVariant="A" itemLocationCode="D"/>
+        <language languageIsoCode="ja" countryIsoCode="JP"/>
+        <issueInfo issueNumber="001" inWork="00"/>
+      </dmIdent>
+      <dmAddressItems>
+        <issueDate year="2026" month="10" day="25"/>
+        <dmTitle><techName>券売機</techName><infoName>適用性相互参照表</infoName></dmTitle>
+      </dmAddressItems>
+    </dmAddress>
+    <dmStatus issueType="new">
+      <security securityClassification="01"/>
+      <responsiblePartnerCompany enterpriseCode="K0001"/>
+      <originator enterpriseCode="K0001"/>
+      <applic><displayText><simplePara>All</simplePara></displayText></applic>
+      <brexDmRef><dmRef><dmRefIdent>
+        <dmCode modelIdentCode="KENBAIKI" systemDiffCode="A" systemCode="00" subSystemCode="0"
+          subSubSystemCode="0" assyCode="00" disassyCode="00" disassyCodeVariant="A" infoCode="022"
+          infoCodeVariant="A" itemLocationCode="D"/>
+      </dmRefIdent></dmRef></brexDmRef>
+      <qualityAssurance><unverified/></qualityAssurance>
+    </dmStatus>
+  </identAndStatusSection>
+  <content>
+    <applicCrossRefTable>
+      <productAttributeList>
+        <productAttribute id="serial" productIdentifier="primary"><name>製造番号</name><displayName>S/N</displayName><descr>筐体背面の銘板</descr></productAttribute>
+        <productAttribute id="model" valuePattern="MV-\d{2}"><name>機種</name><displayName>機種</displayName><enumeration applicPropertyValues="MV-50|MV-60"/></productAttribute>
+        <productAttribute id="version" valueDataType="integer"><name>画面の版</name><displayName>版</displayName><enumeration applicPropertyValues="1~9"/></productAttribute>
+        <productAttribute id="site"><name>設置形態</name><displayName>設置</displayName><enumeration applicPropertyValues="indoor|outdoor"/></productAttribute>
+      </productAttributeList>
+    </applicCrossRefTable>
+  </content>
+</dmodule>
