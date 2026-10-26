@@ -1,53 +1,55 @@
 # @shuji-bonji/s1000d-reader-mcp
 
-S1000D® のデータモジュールとパブリケーションモジュールを、LLM が XML ではなく構造として読むための MCP サーバーです。見出しの階層、番号付きの手順、警告・注意・注記、図（ICN）、表、参照先の題名を保ったまま返し、どの製品に当てはまるか（適用性）はサーバーが判定して結果だけを渡します。すべての応答に「どこまで検証済みか」（`verification`）が付きます。
+**English** | [日本語](./README.ja.md)
+
+An MCP server that lets an LLM read S1000D® data modules and publication modules as structure rather than as XML. It returns the heading hierarchy, numbered steps, warnings, cautions and notes, illustrations (ICN), tables and the titles of reference targets intact, and the server evaluates which product the content applies to (applicability) and passes on only the result. Every response carries how far the document has been verified (`verification`).
 
 > [!IMPORTANT]
-> このサーバーは ASD（Aerospace, Security and Defence Industries Association of Europe）とは無関係の個人プロジェクトです。S1000D® は ASD の登録商標です。
-> S1000D の仕様書・XML スキーマ・公式サンプルは、利用条件により再配布できないため、このパッケージには含まれていません。XSD 検証を行うには、利用者ご自身で [s1000d.org](https://s1000d.org/) から配布物を入手し、展開したフォルダーを環境変数 `S1000D_SPEC_DIR` で指定してください。
+> This is a personal project and is not affiliated with ASD (Aerospace, Security and Defence Industries Association of Europe). S1000D® is a registered trademark of ASD.
+> The S1000D specification, XML schemas, default BREX and official samples are not included in any package or repository, because their terms of use do not grant redistribution. Obtain them from [s1000d.org](https://s1000d.org/) and point the `S1000D_SPEC_DIR` environment variable at the extracted folder.
 
-## できること
+## What it does
 
-| ツール | 内容 |
+| Tool | Description |
 |---|---|
-| `list_data_modules` | CSDB の中のデータモジュール（指定すれば PM・DML・DDN・IMF・UPF も）を、DMC・題名・版・言語・スキーマ名・適用性の表示文付きで一覧にします。モデル識別コード・システムコード・情報コード・スキーマ名・題名の文字で絞れます |
-| `read_data_module` | データモジュール 1 件を構造で読みます。識別・状態部、本文の木（節・段落・リスト・表・図・警告・番号付き手順・要件、プロセスの分岐、故障探求の問いと答え）、参照（題名付き）、検証状態。`product` を渡すとブロックごとに applicable / notApplicable / undetermined を付けます |
-| `read_publication_module` | パブリケーションモジュールを目次として読みます。`pmEntry` の木と、各 `dmRef` / `pmRef` の解決先（ファイル・題名・版） |
-| `resolve_reference` | DMC・PMC・ICN を CSDB のファイルに解決します。ICN は参照元 DM の DOCTYPE 宣言（ファイル名と NOTATION）も返します |
-| `describe_applicability` | 適用性の語彙を返します。ACT の製品属性（id・名前・列挙・識別子）、CCT の条件、PCT の製品（そのまま `product` に使える値）、DM の `applic` 文（id と表示文）、PCT が値を割り当てていない属性。ここでは何も判定しません |
-| `read_icn_metadata` | ICN メタデータファイル（IMF）を読みます。ICN・版・題名・キーワード・機密区分と、状態部の項目の一覧 |
+| `list_data_modules` | Lists the data modules in a CSDB (and, on request, PMs, DMLs, DDNs, IMFs and UPFs) with their DMC, title, issue, language, schema name and applicability display text. Filters by model identification code, system code, information code, schema name and title text |
+| `read_data_module` | Reads one data module as structure: the identification and status section, the body tree (sections, paragraphs, lists, tables, illustrations, warnings, numbered steps and requirements, process branches, fault isolation questions and answers), references (with titles) and the verification status. Pass `product` to mark each block applicable / notApplicable / undetermined |
+| `read_publication_module` | Reads a publication module as a table of contents: the `pmEntry` tree and the resolved target of each `dmRef` / `pmRef` (file, title, issue) |
+| `resolve_reference` | Resolves a DMC, PMC or ICN to a file in the CSDB. For an ICN it also returns the DOCTYPE declaration of the referencing DM (file name and NOTATION) |
+| `describe_applicability` | Returns the applicability vocabulary: product attributes from the ACT (id, name, enumerations, identifiers), conditions from the CCT, products from the PCT (values that can be passed to `product` as they are), the `applic` statements of the DM (id and display text), and attributes to which the PCT assigns no value. It evaluates nothing |
+| `read_icn_metadata` | Reads an ICN metadata file (IMF): ICN, issue, title, keywords, security classification and a list of the items in the status section |
 
-### 適用性の読み方
+### Reading applicability
 
-| 状態 | 意味 |
+| State | Meaning |
 |---|---|
-| `applicable` | 渡した製品に当てはまる |
-| `notApplicable` | 当てはまらない。`omitNotApplicable: true` で本文から省ける |
-| `undetermined` | 判定できない。`reason` に理由（製品に無い属性の名前、`product` 未指定、適用性リポジトリに無い `applicIdentValue`）。「当てはまらない」ではない |
+| `applicable` | Applies to the product you passed |
+| `notApplicable` | Does not apply. `omitNotApplicable: true` leaves it out of the body |
+| `undetermined` | Cannot be evaluated. `reason` says why (the name of an attribute the product lacks, `product` not given, an `applicIdentValue` missing from the applicability repository). This does not mean "does not apply" |
 
-`assert` / `evaluate` の式は返しません。必要な属性と値は `describe_applicability` で調べ、`product` に `{ "attributes": { "model": "…" }, "conditions": { … } }` の形で渡します。
+The server does not return `assert` / `evaluate` expressions. Look up the attributes and values you need with `describe_applicability` and pass them to `product` in the form `{ "attributes": { "model": "…" }, "conditions": { … } }`.
 
-### 検証状態（`verification`）
+### Verification status (`verification`)
 
-既定では XSD 検証だけを行います（`verify: "schema"`）。`verify: "full"` で BREX の連鎖への照合と参照の解決も行い、`verify: "none"` で省きます。省いた工程は `not-run`、XSD が見つからなければ `schema-not-found` と明記され、どちらも `valid` ではありません。XSD に違反した文書は要素の位置が仕様と違う可能性があるため、本文の読み取りも疑ってください。
+By default the server runs XSD validation only (`verify: "schema"`). `verify: "full"` also checks against the BREX (Business Rules Exchange) chain and resolves references; `verify: "none"` skips them. A skipped step is reported as `not-run`, and a missing XSD as `schema-not-found`; neither is `valid`. In a document that violates the XSD, elements may be in positions that differ from the specification, so treat the reading of the body with suspicion as well.
 
-## できないこと
+## What it does not do
 
 > [!WARNING]
-> - **要約・翻訳はしません。** 要約に要る材料（見出し、手順の番号、警告の種類、参照先）を落とさずに返すのが仕事です。
-> - **S1000D への準拠は判定しません。** XSD・BREX の違反の中身は `s1000d-verify-mcp`、BREX のルールの説明は `s1000d-brex-mcp` で読んでください。
-> - 本文を構造化しているのは `descript` / `proced` / `process` / `fault` / `pm` の 5 種です。他の種類は `content.structured: false` で、識別・状態部だけを返します。知らない要素は `kind: "unknown"` として文だけを残し、`content.unknownElements` に数えます。
+> - **It does not summarise or translate.** Its job is to return the material a summary needs (headings, step numbers, warning types, reference targets) without dropping anything.
+> - **It does not judge conformance to S1000D.** Read the details of XSD and BREX violations with `s1000d-verify-mcp`, and the explanation of BREX rules with `s1000d-brex-mcp`.
+> - The body is structured for 5 types only: `descript` / `proced` / `process` / `fault` / `pm`. Other types return `content.structured: false` and only the identification and status section. Unknown elements are kept as `kind: "unknown"` with their text only and counted in `content.unknownElements`.
 
-## 設定
+## Configuration
 
-| 環境変数 | 内容 |
+| Environment variable | Description |
 |---|---|
-| `S1000D_SPEC_DIR` | 利用者が入手した S1000D の配布物を展開したフォルダー。XSD（`xml_schema_flat/`）と既定 BREX をこの下から探します。データ辞書の中にある XSD の写しは使いません |
-| `S1000D_CSDB_DIR` | プロジェクトのデータモジュールが置かれたフォルダー。`:`（Windows は `;`）区切りで複数指定できます。DMC での読み取り、参照先、ACT・CCT・PCT、適用性リポジトリをここから探します |
+| `S1000D_SPEC_DIR` | The folder where you extracted the S1000D distribution you obtained. The server looks for the XSD (`xml_schema_flat/`) and the default BREX under it. It does not use the copies of the XSD inside the data dictionary |
+| `S1000D_CSDB_DIR` | The folder that holds the project's data modules. Several folders can be given, separated by `:` (`;` on Windows). Reading by DMC, reference targets, the ACT, CCT and PCT, and the applicability repository are looked up here |
 
-ツールの引数 `csdbDirs` でフォルダーを追加することもできます。
+Folders can also be added with the tool argument `csdbDirs`.
 
-### Claude Desktop / Claude Code の設定例
+### Example configuration for Claude Desktop / Claude Code
 
 ```json
 {
@@ -64,19 +66,19 @@ S1000D® のデータモジュールとパブリケーションモジュール�
 }
 ```
 
-## 仕組み
+## How it works
 
-読み取り・判定・検証の処理はすべて共有ライブラリ [`@shuji-bonji/s1000d-core`](https://www.npmjs.com/package/@shuji-bonji/s1000d-core) にあり、このサーバーは引数の解釈と応答の形だけを持ちます。検証状態は `s1000d-verify-mcp` と同じ関数で作るので、2 つのサーバーの結果は一致します。
+All reading, evaluation and validation code lives in the shared library [`@shuji-bonji/s1000d-core`](https://www.npmjs.com/package/@shuji-bonji/s1000d-core); this server holds only the interpretation of arguments and the shape of the responses. The verification status is built with the same function as `s1000d-verify-mcp`, so the results of the two servers agree.
 
-## 開発
+## Development
 
 ```sh
 npm install
-npm test            # 自作のテストデータだけで動く
-npm run test:spec   # 利用者が入手した配布物を使う（S1000D_SPEC_DIR で場所を指定。既定 ../../specs/s1000d/issue-7）
-npm run build && S1000D_SPEC_DIR=/path/to/issue-7 S1000D_CSDB_DIR=/path/to/csdb npm start   # stdio で起動
+npm test            # runs on self-made test data only
+npm run test:spec   # uses the distribution you obtained (location given by S1000D_SPEC_DIR; default ../../specs/s1000d/issue-7)
+npm run build && S1000D_SPEC_DIR=/path/to/issue-7 S1000D_CSDB_DIR=/path/to/csdb npm start   # start over stdio
 ```
 
-## ライセンス
+## License
 
-MIT。S1000D® は ASD の登録商標です。このソフトウェアは ASD とは無関係で、仕様書・スキーマ・公式サンプルを含みません。
+MIT. S1000D® is a registered trademark of ASD. This software is not affiliated with ASD and does not include the specification, schemas or official samples.
