@@ -1,19 +1,38 @@
 {
   "name": "@shuji-bonji/s1000d-reader-mcp",
   "mcpName": "io.github.shuji-bonji/s1000d-reader-mcp",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "MCP server that reads S1000D® data modules and publication modules as structure (sections, steps, warnings, figures, references), evaluates applicability for a product, and always reports how far the document was verified. Not affiliated with ASD.",
-  "keywords": ["mcp", "s1000d", "ietm", "ietp", "technical-publications", "applicability", "data-module", "publication-module", "xml"],
+  "keywords": [
+    "mcp",
+    "s1000d",
+    "ietm",
+    "ietp",
+    "technical-publications",
+    "applicability",
+    "data-module",
+    "publication-module",
+    "xml"
+  ],
   "author": "shuji-bonji",
   "license": "MIT",
-  "repository": { "type": "git", "url": "git+https://github.com/shuji-bonji/s1000d-reader-mcp.git" },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/shuji-bonji/s1000d-reader-mcp.git"
+  },
   "bugs": "https://github.com/shuji-bonji/s1000d-reader-mcp/issues",
   "type": "module",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
-  "bin": { "s1000d-reader-mcp": "dist/index.js" },
-  "files": ["dist"],
-  "publishConfig": { "access": "public" },
+  "bin": {
+    "s1000d-reader-mcp": "dist/index.js"
+  },
+  "files": [
+    "dist"
+  ],
+  "publishConfig": {
+    "access": "public"
+  },
   "scripts": {
     "build": "tsc && chmod +x dist/index.js",
     "dev": "tsc --watch",
@@ -43,5 +62,7 @@
     "typescript-eslint": "^8.53.0",
     "vitest": "^4.1.12"
   },
-  "engines": { "node": ">=22.0.0" }
+  "engines": {
+    "node": ">=22.0.0"
+  }
 }
