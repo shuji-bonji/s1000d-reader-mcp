@@ -5,7 +5,7 @@
   "keywords": ["mcp", "s1000d", "ietm", "ietp", "technical-publications", "applicability", "data-module", "publication-module", "xml"],
   "author": "shuji-bonji",
   "license": "MIT",
-  "repository": { "type": "git", "url": "https://github.com/shuji-bonji/s1000d-reader-mcp.git" },
+  "repository": { "type": "git", "url": "git+https://github.com/shuji-bonji/s1000d-reader-mcp.git" },
   "bugs": "https://github.com/shuji-bonji/s1000d-reader-mcp/issues",
   "type": "module",
   "main": "dist/index.js",

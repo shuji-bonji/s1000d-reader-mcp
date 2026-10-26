@@ -1,6 +1,6 @@
 # Changelog
 
-## 未リリース（0.1.0 に向けて）
+## 0.1.0 (2026-10-26)
 
 最初の版。段階 2 の s1000d-reader-mcp です（ROADMAP の作業 7、design/reader-mcp.md、DECISIONS D-18）。
 
