@@ -1,5 +1,6 @@
 {
   "name": "@shuji-bonji/s1000d-reader-mcp",
+  "mcpName": "io.github.shuji-bonji/s1000d-reader-mcp",
   "version": "0.1.0",
   "description": "MCP server that reads S1000D® data modules and publication modules as structure (sections, steps, warnings, figures, references), evaluates applicability for a product, and always reports how far the document was verified. Not affiliated with ASD.",
   "keywords": ["mcp", "s1000d", "ietm", "ietp", "technical-publications", "applicability", "data-module", "publication-module", "xml"],
@@ -23,7 +24,8 @@
     "lint": "eslint src",
     "format": "prettier --write src",
     "format:check": "prettier --check src",
-    "prepublishOnly": "npm run build"
+    "version": "node scripts/sync-plugin-version.mjs && git add .claude-plugin/plugin.json server.json",
+    "prepublishOnly": "node scripts/sync-plugin-version.mjs --check && npm run build"
   },
   "dependencies": {
     "@modelcontextprotocol/server": "^2.0.0",
