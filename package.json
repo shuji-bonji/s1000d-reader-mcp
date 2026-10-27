@@ -1,7 +1,7 @@
 {
   "name": "@shuji-bonji/s1000d-reader-mcp",
   "mcpName": "io.github.shuji-bonji/s1000d-reader-mcp",
-  "version": "0.1.1",
+  "version": "0.2.0",
   "description": "MCP server that reads S1000D® data modules and publication modules as structure (sections, steps, warnings, figures, references), evaluates applicability for a product, and always reports how far the document was verified. Not affiliated with ASD.",
   "keywords": [
     "mcp",
