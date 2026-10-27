@@ -7,6 +7,7 @@ import {
   ApplicEvaluator,
   collectReferences,
   defaultXmlEngine,
+  findApplicTables,
   formatDmc,
   formatPmc,
   parseDmc,
@@ -32,7 +33,6 @@ import {
   configNotes,
   csdbIndex,
   csdbSearchDirs,
-  findApplicTables,
   loadObject,
   loadXml,
   readDmByCode,
@@ -466,7 +466,7 @@ async function describeApplicability(args: Args) {
   );
   const doc = defaultXmlEngine.parse(xml).document;
   const index = csdbIndex(ctx);
-  const tables = findApplicTables(xml, ctx);
+  const tables = findApplicTables(xml, index);
   const evaluator = new ApplicEvaluator(doc, { repository: applicRepository(index) });
   const used = new Set<string>();
   const statements = evaluator.statements.map((s) => {

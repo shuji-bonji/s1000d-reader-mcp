@@ -1,5 +1,6 @@
 /**
- * 読み取りに使うもの（CSDB の索引、XSD の検証器、BREX の解決器、ACT・CCT・PCT の読み取り）をまとめて作る。
+ * 読み取りに使うもの（CSDB の索引、XSD の検証器、BREX の解決器、適用性リポジトリ）をまとめて作る。
+ * ACT・CCT・PCT の探索は core 0.3.0 の findApplicTables（以前はここにあった）。
  * 探索・検証・判定の処理はすべて s1000d-core。ここは環境変数とツール引数の解釈、索引の使い回しだけ。
  */
 import { existsSync, readFileSync, statSync } from 'node:fs';
@@ -9,24 +10,13 @@ import {
   createDirectoryBrexResolver,
   defaultXmlEngine,
   findSchemaDirs,
-  formatDmc,
   parseDmc,
   parsePmc,
-  readAct,
   readApplicStatements,
-  readCct,
-  readDataModuleInfo,
-  readDmCodeElement,
-  readPct,
-  type Act,
   type ApplicStatement,
   type BrexResolver,
-  type Cct,
   type CsdbObject,
   type DmCode,
-  type DmRef,
-  type Element,
-  type Pct,
   type SchemaDir,
 } from '@shuji-bonji/s1000d-core';
 import { Libxml2SchemaValidator } from '@shuji-bonji/s1000d-core/xsd-libxml2';
@@ -177,77 +167,6 @@ export function readDmByCode(
   const found = index?.findDataModules(dmCode)[0];
   if (!found) return undefined;
   return { path: found.path, xml: readFileSync(found.path, 'utf8') };
-}
-
-export interface ApplicTables {
-  act?: { path: string; act: Act };
-  cct?: { path: string; cct: Cct };
-  pct?: { path: string; pct: Pct };
-  /** 見つからなかった表と理由 */
-  missing: string[];
-}
-
-/**
- * 対象 DM の識別・状態部の applicCrossRefTableRef から ACT を探し、ACT の参照から CCT・PCT を探す。
- * ACT の参照が無いときは、同じモデル識別コードの ACT（情報コード 00W）を CSDB から探す。
- */
-export function findApplicTables(dmXml: string, options: ContextOptions): ApplicTables {
-  const out: ApplicTables = { missing: [] };
-  const index = csdbIndex(options);
-  if (!index) {
-    out.missing.push('no CSDB folders (ACT/CCT/PCT cannot be searched)');
-    return out;
-  }
-  const doc = defaultXmlEngine.parse(dmXml).document;
-  const info = readDataModuleInfo(dmXml);
-  let actRef: DmRef | undefined;
-  const refEl = defaultXmlEngine.selectNodes(
-    '//applicCrossRefTableRef/dmRef/dmRefIdent/dmCode',
-    doc,
-  )[0];
-  if (refEl) {
-    const r = readDmCodeElement(refEl as Element);
-    if (r.ok) actRef = { dmCode: r.value };
-  }
-  if (!actRef && info.identAndStatus) {
-    const own = info.identAndStatus.dmCode;
-    const cand = index.objects.find(
-      (o) =>
-        o.dm && o.dm.dmCode.modelIdentCode === own.modelIdentCode && o.dm.dmCode.infoCode === '00W',
-    );
-    if (cand?.dm) actRef = { dmCode: cand.dm.dmCode };
-  }
-  if (!actRef) {
-    out.missing.push(
-      'the data module has no applicCrossRefTableRef and no ACT (infoCode 00W) with the same modelIdentCode was found',
-    );
-    return out;
-  }
-  const actFile = readDmByCode(index, actRef.dmCode);
-  if (!actFile) {
-    out.missing.push(`ACT ${formatDmc(actRef.dmCode)} is not in the CSDB`);
-    return out;
-  }
-  const act = readAct(defaultXmlEngine.parse(actFile.xml).document);
-  if (!act) {
-    out.missing.push(`${actFile.path} is not an applicCrossRefTable`);
-    return out;
-  }
-  out.act = { path: actFile.path, act };
-  if (act.condCrossRefTableRef) {
-    const f = readDmByCode(index, act.condCrossRefTableRef.dmCode);
-    const cct = f ? readCct(defaultXmlEngine.parse(f.xml).document) : undefined;
-    if (f && cct) out.cct = { path: f.path, cct };
-    else out.missing.push(`CCT ${formatDmc(act.condCrossRefTableRef.dmCode)} is not in the CSDB`);
-  }
-  if (act.productCrossRefTableRef) {
-    const f = readDmByCode(index, act.productCrossRefTableRef.dmCode);
-    const pct = f ? readPct(defaultXmlEngine.parse(f.xml).document) : undefined;
-    if (f && pct) out.pct = { path: f.path, pct };
-    else
-      out.missing.push(`PCT ${formatDmc(act.productCrossRefTableRef.dmCode)} is not in the CSDB`);
-  }
-  return out;
 }
 
 /** CSDB の中の「適用性リポジトリ」（applic/@applicIdentValue を持つ DM）を集めて、applicIdentValue → applic の表にする */
