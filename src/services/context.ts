@@ -2,6 +2,7 @@
  * 読み取りに使うもの（CSDB の索引、XSD の検証器、BREX の解決器、適用性リポジトリ）をまとめて作る。
  * ACT・CCT・PCT の探索は core 0.3.0 の findApplicTables（以前はここにあった）。
  * 探索・検証・判定の処理はすべて s1000d-core。ここは環境変数とツール引数の解釈、索引の使い回しだけ。
+ * CSDB の中身は索引の `read()`（core 0.5.0 の `CsdbSource`）から読み、`readFileSync` はツール引数の `path` にだけ使う。
  */
 import { existsSync, readFileSync, statSync } from 'node:fs';
 import {
@@ -147,7 +148,7 @@ export function loadObject(
       throw new Error(
         `Data module ${args.dmc} was not found in: ${csdbSearchDirs(options).join(', ')}`,
       );
-    return { xml: readFileSync(found.path, 'utf8'), path: found.path };
+    return { xml: index.read(found), path: found.path };
   }
   if (args.pmc) {
     const pmc = parsePmc(args.pmc);
@@ -161,7 +162,7 @@ export function loadObject(
       throw new Error(
         `Publication module ${args.pmc} was not found in: ${csdbSearchDirs(options).join(', ')}`,
       );
-    return { xml: readFileSync(found.path, 'utf8'), path: found.path };
+    return { xml: index.read(found), path: found.path };
   }
   throw new Error('One of "path", "xml", "dmc" or "pmc" is required');
 }
@@ -172,8 +173,17 @@ export function readDmByCode(
   dmCode: DmCode,
 ): { path: string; xml: string } | undefined {
   const found = index?.findDataModules(dmCode)[0];
-  if (!found) return undefined;
-  return { path: found.path, xml: readFileSync(found.path, 'utf8') };
+  if (!found || !index) return undefined;
+  return { path: found.path, xml: index.read(found) };
+}
+
+/**
+ * 索引のオブジェクトを、応答に載せた `path` から読み直す（参照の解決結果など、CsdbObject を手放した後に使う）。
+ * 索引に無い path は、これまでどおりファイルとして読む
+ */
+export function readObjectText(index: CsdbIndex | undefined, path: string): string {
+  const obj = index?.objects.find((o) => o.path === path);
+  return obj && index ? index.read(obj) : readFileSync(path, 'utf8');
 }
 
 /** CSDB の中の「適用性リポジトリ」（applic/@applicIdentValue を持つ DM）を集めて、applicIdentValue → applic の表にする */
@@ -186,7 +196,7 @@ export function applicRepository(index: CsdbIndex | undefined): Map<string, Appl
   for (const o of index.objects.filter((x: CsdbObject) => x.kind === 'dm')) {
     let xml: string;
     try {
-      xml = readFileSync(o.path, 'utf8');
+      xml = index.read(o);
     } catch {
       continue;
     }

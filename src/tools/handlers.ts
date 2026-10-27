@@ -2,7 +2,6 @@
  * ツールの実装。definitions.ts の name と 1 対 1 で対応する。
  * 読み取り・判定・検証の中身はすべて s1000d-core。ここは引数の解釈と応答の形だけ。
  */
-import { readFileSync } from 'node:fs';
 import {
   ApplicEvaluator,
   collectReferences,
@@ -36,6 +35,7 @@ import {
   loadObject,
   loadXml,
   readDmByCode,
+  readObjectText,
   schemaDirs,
   schemaValidator,
   type ContextOptions,
@@ -169,7 +169,7 @@ async function listDataModules(args: Args) {
     if (o.kind === 'dm' || o.kind === 'pm') {
       let xml: string;
       try {
-        xml = readFileSync(o.path, 'utf8');
+        xml = index.read(o);
       } catch {
         continue;
       }
@@ -282,7 +282,7 @@ async function readDataModule(args: Args) {
         target: r.target,
         context: r.reference.context,
         path: r.path,
-        ...(r.path && r.reference.kind === 'dmRef' ? titleOf(readFileSync(r.path, 'utf8')) : {}),
+        ...(r.path && r.reference.kind === 'dmRef' ? titleOf(readObjectText(index, r.path)) : {}),
         notation: r.notation,
       }));
     const unresolved = resolved.unresolved
@@ -399,7 +399,7 @@ async function resolveReference(args: Args) {
     return {
       kind: 'dmRef',
       target: formatDmc(dmc.value),
-      found: found.map((o) => ({ ...describe(o), ...titleOf(readFileSync(o.path, 'utf8')) })),
+      found: found.map((o) => ({ ...describe(o), ...titleOf(index.read(o)) })),
       searched: csdbSearchDirs(ctx),
     };
   }
@@ -527,7 +527,7 @@ async function readIcnMetadata(args: Args) {
     );
     if (!found) throw new Error(`No IMF for ICN ${args.icn} in: ${csdbSearchDirs(ctx).join(', ')}`);
     path = found.path;
-    xml = readFileSync(found.path, 'utf8');
+    xml = index.read(found);
   } else throw new Error('One of "path", "xml" or "icn" is required');
   const doc = defaultXmlEngine.parse(xml).document;
   if (doc.documentElement?.nodeName !== 'icnMetadataFile')
