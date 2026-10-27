@@ -79,6 +79,25 @@ S1000D® のデータモジュールとパブリケーションモジュール�
 }
 ```
 
+### HTTP で起動する（製品への組み込み）
+
+既定は stdio です。`--http` を付けると Streamable HTTP で起動し、CSDB 製品のサーバーや Web アプリから HTTP で呼べます（段階 2.5 の組み込み基盤）。
+
+```sh
+npx -y @shuji-bonji/s1000d-reader-mcp --http                      # http://127.0.0.1:3000/mcp
+npx -y @shuji-bonji/s1000d-reader-mcp --http --port 3101 --path /reader
+```
+
+| 引数 | 既定 | 内容 |
+|---|---|---|
+| `--host` | `127.0.0.1` | 束縛するアドレス |
+| `--port` | `3000` | ポート。`0` で空いているポート |
+| `--path` | `/mcp` | MCP のエンドポイントのパス。`GET /healthz` は名前と版を返します |
+| `--allowed-host` | （下記） | `Host` ヘッダーに許すホスト名。カンマ区切りか複数回 |
+| `--allowed-origin` | （下記） | `Origin` ヘッダーに許すホスト名 |
+
+`--host` が loopback（`127.0.0.1` / `::1` / `localhost`）のときは、`Host` と `Origin` を localhost 系に限ります（DNS rebinding 対策）。それ以外のアドレスに束縛したときは検査しないので、製品側のリバースプロキシや認証の後ろに置いてください。認証・権限・マルチテナントはこのサーバーでは持ちません。環境変数と設定ファイルの扱いは stdio と同じです。
+
 ## 仕組み
 
 読み取り・判定・検証の処理はすべて共有ライブラリ [`@shuji-bonji/s1000d-core`](https://www.npmjs.com/package/@shuji-bonji/s1000d-core) にあり、このサーバーは引数の解釈と応答の形だけを持ちます。検証状態は `s1000d-verify-mcp` と同じ関数で作るので、2 つのサーバーの結果は一致します。

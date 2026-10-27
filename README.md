@@ -79,6 +79,25 @@ Environment variables take precedence when they are set. Paths that start with `
 }
 ```
 
+### Running over HTTP (embedding in a product)
+
+The default is stdio. With `--http` the server starts over Streamable HTTP, so a CSDB product's server or a web application can call it over HTTP (the embedding foundation of stage 2.5).
+
+```sh
+npx -y @shuji-bonji/s1000d-reader-mcp --http                      # http://127.0.0.1:3000/mcp
+npx -y @shuji-bonji/s1000d-reader-mcp --http --port 3101 --path /reader
+```
+
+| Argument | Default | Meaning |
+|---|---|---|
+| `--host` | `127.0.0.1` | Address to bind to |
+| `--port` | `3000` | Port; `0` picks a free port |
+| `--path` | `/mcp` | Path of the MCP endpoint. `GET /healthz` returns the name and version |
+| `--allowed-host` | (see below) | Host names allowed in the `Host` header; comma-separated or repeated |
+| `--allowed-origin` | (see below) | Host names allowed in the `Origin` header |
+
+When `--host` is a loopback address (`127.0.0.1` / `::1` / `localhost`), `Host` and `Origin` are limited to localhost names (DNS rebinding protection). When bound to any other address they are not checked, so put the server behind the product's reverse proxy or authentication. Authentication, authorization and multi-tenancy are not part of this server. Environment variables and the config file work the same as with stdio.
+
 ## How it works
 
 All reading, evaluation and validation code lives in the shared library [`@shuji-bonji/s1000d-core`](https://www.npmjs.com/package/@shuji-bonji/s1000d-core); this server holds only the interpretation of arguments and the shape of the responses. The verification status is built with the same function as `s1000d-verify-mcp`, so the results of the two servers agree.
