@@ -20,7 +20,14 @@ import {
   type SchemaDir,
 } from '@shuji-bonji/s1000d-core';
 import { Libxml2SchemaValidator } from '@shuji-bonji/s1000d-core/xsd-libxml2';
-import { ENV, csdbDirs, specDir } from '../config.js';
+import {
+  ENV,
+  csdbDirs,
+  specDir,
+  specDirHint,
+  stackConfig,
+  stackConfigWarnings,
+} from '../config.js';
 
 export interface ContextOptions {
   /** ツール引数で追加されたフォルダー */
@@ -89,10 +96,10 @@ export function brexResolver(options: ContextOptions = {}): BrexResolver {
 }
 
 export function configNotes(options: ContextOptions = {}): string[] {
-  const notes: string[] = [];
+  const notes: string[] = [...stackConfigWarnings()];
   if (!specDir()) {
     notes.push(
-      `${ENV.specDir} is not set: verification.schema is reported as schema-not-found. Set it to the folder where the S1000D distribution is extracted.`,
+      `${ENV.specDir} is not set: verification.schema is reported as schema-not-found. ${specDirHint()}`,
     );
   } else if (schemaDirs().length === 0) {
     notes.push(
@@ -101,7 +108,7 @@ export function configNotes(options: ContextOptions = {}): string[] {
   }
   if (csdbSearchDirs(options).length === 0) {
     notes.push(
-      `No CSDB folders: set ${ENV.csdbDirs} or pass "csdbDirs". References cannot be resolved and ACT/CCT/PCT cannot be found.`,
+      `No CSDB folders: set ${ENV.csdbDirs}, add "csdbDirs" to ${stackConfig().configPath}, or pass "csdbDirs". References cannot be resolved and ACT/CCT/PCT cannot be found.`,
     );
   }
   return notes;

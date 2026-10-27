@@ -2,6 +2,7 @@
  * サーバを InMemoryTransport で叩き、ツール定義とハンドラの対応、各ツールの応答の形を確かめる。
  * テストデータは自作（券売機: 説明 DM、手順 DM、ACT、BREX 2 層、PM）。配布物は使わない。
  */
+import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
@@ -48,6 +49,8 @@ const walk = (nodes: Node[], f: (n: Node) => void) => {
 beforeAll(async () => {
   delete process.env.S1000D_SPEC_DIR;
   delete process.env.S1000D_CSDB_DIR;
+  // 開発機の ~/.config/s1000d-stack/config.json を読まないよう、存在しない場所に向ける
+  process.env.S1000D_CONFIG = join(tmpdir(), 's1000d-no-such-config.json');
   clearCaches();
   const [clientTransport, serverTransport] = InMemoryTransport.createLinkedPair();
   await buildServer().connect(serverTransport);
