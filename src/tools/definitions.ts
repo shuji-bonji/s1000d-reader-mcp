@@ -44,14 +44,14 @@ export const tools: ToolDefinition[] = [
   {
     name: 'list_data_modules',
     description:
-      'List the CSDB objects (data modules by default; optionally publication modules, DML, DDN, IMF, UPF) in the CSDB folders with DMC parts, techName/infoName, issue, language, schema name (descript/proced/…), S1000D issue and applicability display text. Filter by modelIdentCode, systemCode, infoCode, schemaName or title text. Paged with offset/limit.',
+      'List the CSDB objects (data modules by default; optionally publication modules, DML, DDN, IMF, UPF, ICN) in the CSDB folders with DMC parts, techName/infoName, issue, language, schema name (descript/proced/…), S1000D issue and applicability display text. A DML or DDN row also carries its code, issue date, entry/item count and a reconciliation summary against the CSDB (found / issue-mismatch / not-found / not-checked; for a DML also how many DMs and PMs it does not list). Filter by modelIdentCode, systemCode, infoCode, schemaName or title text. Paged with offset/limit.',
     inputSchema: {
       type: 'object',
       properties: {
         csdbDirs: csdbDirsParam,
         include: {
           type: 'array',
-          items: { type: 'string', enum: ['dm', 'pm', 'dml', 'ddn', 'imf', 'upf', 'icn'] },
+          items: { type: 'string', enum: ['dm', 'dme', 'pm', 'dml', 'ddn', 'imf', 'upf', 'icn'] },
           description: 'Object kinds to list (default: dm).',
         },
         filter: {

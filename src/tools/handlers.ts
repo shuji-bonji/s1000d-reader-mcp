@@ -14,6 +14,10 @@ import {
   productFromPct,
   readContentFromXml,
   readDataModuleInfo,
+  readDdn,
+  readDml,
+  reconcileDdn,
+  reconcileDml,
   resolveReferences,
   verifyDataModule,
   type ApplicExpr,
@@ -198,6 +202,44 @@ async function listDataModules(args: Args) {
         applicDisplayText: ident?.applicDisplayText,
       };
     } else if (text || str(f.schemaName)) continue;
+    else if (o.kind === 'dml' || o.kind === 'ddn') {
+      // DML・DDN は読み取った中身（行数・納入物の件数）と CSDB との照合の集計を添える（core 0.6.0、段階 2.5 の作業 5）。
+      // 行ごとの結果は s1000d-verify-mcp の reconcile_dml
+      try {
+        const xml = index.read(o);
+        if (o.kind === 'dml') {
+          const dml = readDml(xml);
+          if (dml.ok) {
+            const rec = reconcileDml(dml.value, index);
+            row = {
+              ...row,
+              dmlCode: rec.dmlCode,
+              issueInfo: dml.value.issueInfo,
+              issueDate: dml.value.issueDate,
+              issueType: dml.value.issueType,
+              entryCount: rec.entryCount,
+              reconciliation: { ...rec.counts, notListed: rec.notListed.length },
+            };
+          } else row.error = dml.error;
+        } else {
+          const ddn = readDdn(xml);
+          if (ddn.ok) {
+            const rec = reconcileDdn(ddn.value, index);
+            row = {
+              ...row,
+              ddnCode: rec.ddnCode,
+              issueDate: ddn.value.issueDate,
+              dispatchFrom: ddn.value.dispatchFrom,
+              dispatchTo: ddn.value.dispatchTo,
+              itemCount: rec.itemCount,
+              reconciliation: rec.counts,
+            };
+          } else row.error = ddn.error;
+        }
+      } catch (e) {
+        row.error = e instanceof Error ? e.message : String(e);
+      }
+    }
     rows.push(row);
   }
   const offset = int(args.offset, 0, 0, Number.MAX_SAFE_INTEGER);
@@ -216,7 +258,14 @@ async function listDataModules(args: Args) {
     },
     countsBySchema: bySchema,
     objects: rows.slice(offset, offset + limit),
-    _notes: configNotes(ctx),
+    _notes: [
+      ...configNotes(ctx),
+      ...(include.has('dml') || include.has('ddn')
+        ? [
+            'DML / DDN rows carry "reconciliation" (found / issue-mismatch / not-found / not-checked, and for a DML the count of DMs and PMs the DML does not list). For the per-entry result use reconcile_dml in s1000d-verify-mcp.',
+          ]
+        : []),
+    ],
   };
 }
 

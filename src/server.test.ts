@@ -81,6 +81,36 @@ describe('server', () => {
 });
 
 describe('list_data_modules', () => {
+  it('include に dml / ddn を渡すと、読み取った内容と CSDB との照合の集計が付く', async () => {
+    const r = await call('list_data_modules', { csdbDirs: [fixtures], include: ['dml', 'ddn'] });
+    expect(r.isError).toBe(false);
+    expect(r.data.page.total).toBe(2);
+    const dml = r.data.objects.find((o: { kind: string }) => o.kind === 'dml');
+    expect(dml).toMatchObject({
+      dmlCode: 'KENBAIKI-K0001-S-2026-00001',
+      issueInfo: { issueNumber: '001', inWork: '00' },
+      issueDate: '2026-10-28',
+      issueType: 'new',
+      entryCount: 3,
+      // 040 は found、022 は 002-00 を指すが CSDB は 001-00（版違い）、99 系は無い。手順 DM・ACT・PM の 3 件は DML に無い
+      reconciliation: {
+        found: 1,
+        'issue-mismatch': 1,
+        'not-found': 1,
+        'not-checked': 0,
+        notListed: 3,
+      },
+    });
+    const ddn = r.data.objects.find((o: { kind: string }) => o.kind === 'ddn');
+    expect(ddn).toMatchObject({
+      ddnCode: 'KENBAIKI-K0001-K0002-2026-00001',
+      dispatchFrom: 'KB Works',
+      dispatchTo: '受け手',
+      itemCount: 4,
+      reconciliation: { found: 2, 'issue-mismatch': 1, 'not-found': 1, 'not-checked': 0 },
+    });
+    expect(r.data._notes.some((n: string) => n.includes('reconcile_dml'))).toBe(true);
+  });
   it('CSDB の DM を題名付きで一覧にし、filter で絞れる', async () => {
     const all = await call('list_data_modules', { csdbDirs: [fixtures] });
     expect(all.data.page.total).toBe(5); // 説明、手順、ACT、BREX 2 層

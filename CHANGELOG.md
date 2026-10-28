@@ -1,5 +1,16 @@
 # Changelog
 
+## 0.6.0 (2026-10-28)
+
+### 追加
+
+- `list_data_modules` の `include` に `dml` / `ddn` を渡したとき、行にコード・発行日・行数（納入物の件数）と、CSDB との照合の集計 `reconciliation`（`found` / `issue-mismatch` / `not-found` / `not-checked`。DML では `notListed` の数も）を付けるようにしました（段階 2.5 の作業 5、D-19。core 0.6.0 の `readDml` / `readDdn` / `reconcileDml` / `reconcileDdn`）。行ごとの結果は `s1000d-verify-mcp` の `reconcile_dml` が返します。
+- `include` に `dme`（拡張 DMC のデータモジュール）を足しました。
+
+### 変更
+
+- 依存を core `^0.6.0` に上げました。
+
 ## 0.5.0 (2026-10-27)
 
 ### 追加

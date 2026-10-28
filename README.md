@@ -12,7 +12,7 @@ An MCP server that lets an LLM read S1000D® data modules and publication module
 
 | Tool | Description |
 |---|---|
-| `list_data_modules` | Lists the data modules in a CSDB (and, on request, PMs, DMLs, DDNs, IMFs and UPFs) with their DMC, title, issue, language, schema name and applicability display text. Filters by model identification code, system code, information code, schema name and title text |
+| `list_data_modules` | Lists the data modules in a CSDB (and, on request, PMs, DMLs, DDNs, IMFs and UPFs) with their DMC, title, issue, language, schema name and applicability display text. Filters by model identification code, system code, information code, schema name and title text. A DML or DDN row also carries its code, issue date, entry or item count and a reconciliation summary against the CSDB (`found` / `issue-mismatch` / `not-found` / `not-checked`; for a DML also how many DMs and PMs it does not list). The per-entry result comes from `reconcile_dml` in `s1000d-verify-mcp` |
 | `read_data_module` | Reads one data module as structure: the identification and status section, the body tree (sections, paragraphs, lists, tables, illustrations, warnings, numbered steps and requirements, process branches, fault isolation questions and answers), references (with titles) and the verification status. Pass `product` to mark each block applicable / notApplicable / undetermined |
 | `read_publication_module` | Reads a publication module as a table of contents: the `pmEntry` tree and the resolved target of each `dmRef` / `pmRef` (file, title, issue) |
 | `resolve_reference` | Resolves a DMC, PMC or ICN to a file in the CSDB. For an ICN it also returns the DOCTYPE declaration of the referencing DM (file name and NOTATION) |
