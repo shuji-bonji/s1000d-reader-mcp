@@ -91,7 +91,7 @@ export const tools: ToolDefinition[] = [
   {
     name: 'read_data_module',
     description:
-      'Read one data module as structure, not XML: identification and status (DMC, issue, language, title, BREX ref, QA, DM-level applicability), the body as a tree of blocks (sections, paragraphs, lists, tables, figures with ICN, warnings/cautions/notes, numbered steps, requirements; processes and fault isolation too), the references it makes, and ALWAYS a "verification" status (XSD by default). Applicability of each block is evaluated for the given product (applicable / notApplicable / undetermined); without a product, only display texts are returned — assert expressions are never returned.',
+      'Read one data module as structure, not XML: identification and status (DMC, issue, language, title, BREX ref, QA, DM-level applicability), the body as a tree of blocks (sections, paragraphs, lists, tables, figures with ICN, warnings/cautions/notes, numbered steps, requirements; processes and fault isolation too), the references it makes, ALWAYS a "verification" status (XSD by default) and ALWAYS "securityClassification" (the data module\'s value and the values carried by elements in the body, uninterpreted) at the top of the response. section "outline" returns a summary (headings, step numbers, first sentence, size of each subtree) for deciding what to read. Applicability of each block is evaluated for the given product (applicable / notApplicable / undetermined); without a product, only display texts are returned — assert expressions are never returned.',
     inputSchema: {
       type: 'object',
       properties: {
@@ -102,9 +102,15 @@ export const tools: ToolDefinition[] = [
         product: productParam,
         section: {
           type: 'string',
-          enum: ['identAndStatus', 'content', 'all'],
-          description: 'Which part to return (default all).',
+          enum: ['identAndStatus', 'content', 'all', 'outline'],
+          description:
+            'Which part to return (default all). "outline" returns only headings, step numbers, the first sentence and the size (nodes / chars / admonitions) of each subtree — call it first on a large data module to decide what to read.',
           default: 'all',
+        },
+        outlineDepth: {
+          type: 'integer',
+          description:
+            'With section "outline": how many levels of headings / steps to return (default: all levels).',
         },
         verify: verifyParam,
         omitNotApplicable: {

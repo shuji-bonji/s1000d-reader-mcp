@@ -15,7 +15,7 @@ import { toolHandlers } from './tools/handlers.js';
  * 3. 「undetermined」を「当てはまらない」と読まれること。製品の値が足りないだけ。describe_applicability で補う。
  * 4. BREX の違反や XSD の違反の中身がここで分かると読まれること。それは verify-mcp / brex-mcp。
  */
-const INSTRUCTIONS = `This server READS S1000D data modules and publication modules as structure (sections, paragraphs, lists, tables, figures with ICN, warnings/cautions/notes, numbered steps, requirements, process flows, fault isolation questions, PM tables of contents) and EVALUATES applicability for a product. Every response carries "verification" (VerificationStatus): schema (valid / invalid / schema-not-found / not-run), brex and references ("not-run" unless verify="full").
+const INSTRUCTIONS = `This server READS S1000D data modules and publication modules as structure (sections, paragraphs, lists, tables, figures with ICN, warnings/cautions/notes, numbered steps, requirements, process flows, fault isolation questions, PM tables of contents) and EVALUATES applicability for a product. Every response carries "verification" (VerificationStatus): schema (valid / invalid / schema-not-found / not-run), brex and references ("not-run" unless verify="full"), and every read_data_module / read_publication_module response starts with "securityClassification" (the document's value and the values carried by elements in the body, as written — decide how to handle the content before quoting it; the server does not interpret the values).
 
 It does NOT do the following:
 - It does not return applicability expressions (assert/evaluate). The server evaluates them for the "product" you pass and returns applicable / notApplicable / undetermined with the human-readable displayText. "undetermined" means the product lacks a needed value (see reason) or no product was given — it is not "does not apply". Call describe_applicability to learn the attribute ids and values (ACT/CCT/PCT) and the values the PCT leaves unassigned.
@@ -25,7 +25,9 @@ It does NOT do the following:
 
 Reading results: if verification.schema is schema-not-found or invalid, the structure may be misread — say so. Elements the reader does not know are kept as kind "unknown" with their text and counted in content.unknownElements. Data module kinds other than descript / proced / process / fault / pm return structured: false with identAndStatus only. References to the specification (modelIdentCode "S1000D") are not listed as unresolved.
 
-Costly options: read_data_module with verify="full" runs BREX checks (about 0.1 s per data module). list_data_modules reads every file for titles; narrow with filter.`;
+Costly options: read_data_module with verify="full" runs BREX checks (about 0.1 s per data module). list_data_modules reads every file for titles; narrow with filter.
+
+Budget: on a large data module call read_data_module with section "outline" first. It returns headings, step numbers, the first sentence of each and the size of each subtree (nodes / chars / warnings), without the body or the references; content.size says how big the full body is. Then read section "content" (optionally with maxNodes) once you know what you need.`;
 
 export function buildServer(): McpServer {
   const server = new McpServer(

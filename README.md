@@ -13,7 +13,7 @@ An MCP server that lets an LLM read S1000D® data modules and publication module
 | Tool | Description |
 |---|---|
 | `list_data_modules` | Lists the data modules in a CSDB (and, on request, PMs, DMLs, DDNs, IMFs and UPFs) with their DMC, title, issue, language, schema name and applicability display text. Filters by model identification code, system code, information code, schema name and title text. A DML or DDN row also carries its code, issue date, entry or item count and a reconciliation summary against the CSDB (`found` / `issue-mismatch` / `not-found` / `not-checked`; for a DML also how many DMs and PMs it does not list). The per-entry result comes from `reconcile_dml` in `s1000d-verify-mcp` |
-| `read_data_module` | Reads one data module as structure: the identification and status section, the body tree (sections, paragraphs, lists, tables, illustrations, warnings, numbered steps and requirements, process branches, fault isolation questions and answers), references (with titles) and the verification status. Pass `product` to mark each block applicable / notApplicable / undetermined |
+| `read_data_module` | Reads one data module as structure: the identification and status section, the body tree (sections, paragraphs, lists, tables, illustrations, warnings, numbered steps and requirements, process branches, fault isolation questions and answers), references (with titles) and the verification status. Pass `product` to mark each block applicable / notApplicable / undetermined. With `section: "outline"` it returns only headings, step numbers, the first sentence and the size of each subtree (nodes, characters, warnings), so a large data module can be surveyed before its body is read |
 | `read_publication_module` | Reads a publication module as a table of contents: the `pmEntry` tree and the resolved target of each `dmRef` / `pmRef` (file, title, issue) |
 | `resolve_reference` | Resolves a DMC, PMC or ICN to a file in the CSDB. For an ICN it also returns the DOCTYPE declaration of the referencing DM (file name and NOTATION) |
 | `describe_applicability` | Returns the applicability vocabulary: product attributes from the ACT (id, name, enumerations, identifiers), conditions from the CCT, products from the PCT (values that can be passed to `product` as they are), the `applic` statements of the DM (id and display text), and attributes to which the PCT assigns no value. It evaluates nothing |
@@ -32,6 +32,10 @@ The server does not return `assert` / `evaluate` expressions. Look up the attrib
 ### Verification status (`verification`)
 
 By default the server runs XSD validation only (`verify: "schema"`). `verify: "full"` also checks against the BREX (Business Rules Exchange) chain and resolves references; `verify: "none"` skips them. A skipped step is reported as `not-run`, and a missing XSD as `schema-not-found`; neither is `valid`. In a document that violates the XSD, elements may be in positions that differ from the specification, so treat the reading of the body with suspicion as well.
+
+### Security classification (`securityClassification`) and size (`size`)
+
+Every `read_data_module` and `read_publication_module` response starts with `securityClassification`: `dataModule` (the value in the identification and status section) and `inContent` (the number of body elements per value). The server does not interpret the values (S1000D leaves their meaning to the project). An agent can decide how to handle the content before quoting it. The body carries `size` (nodes, characters, count per kind, number of warnings) so the amount to read can be estimated.
 
 ## What it does not do
 

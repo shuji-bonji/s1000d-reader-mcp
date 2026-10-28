@@ -13,7 +13,7 @@ S1000D® のデータモジュールとパブリケーションモジュール�
 | ツール | 内容 |
 |---|---|
 | `list_data_modules` | CSDB の中のデータモジュール（指定すれば PM・DML・DDN・IMF・UPF も）を、DMC・題名・版・言語・スキーマ名・適用性の表示文付きで一覧にします。モデル識別コード・システムコード・情報コード・スキーマ名・題名の文字で絞れます。DML・DDN の行には、コード・発行日・行数（納入物の件数）と、CSDB との照合の集計（`found` / `issue-mismatch` / `not-found` / `not-checked`。DML では載っていない DM・PM の数も）が付きます。行ごとの結果は `s1000d-verify-mcp` の `reconcile_dml` が返します |
-| `read_data_module` | データモジュール 1 件を構造で読みます。識別・状態部、本文の木（節・段落・リスト・表・図・警告・番号付き手順・要件、プロセスの分岐、故障探求の問いと答え）、参照（題名付き）、検証状態。`product` を渡すとブロックごとに applicable / notApplicable / undetermined を付けます |
+| `read_data_module` | データモジュール 1 件を構造で読みます。識別・状態部、本文の木（節・段落・リスト・表・図・警告・番号付き手順・要件、プロセスの分岐、故障探求の問いと答え）、参照（題名付き）、検証状態。`product` を渡すとブロックごとに applicable / notApplicable / undetermined を付けます。`section: "outline"` にすると、見出し・手順の番号・最初の 1 文と部分木の大きさ（節点数・文字数・警告の数）だけを返すので、大きなデータモジュールはまずこれで当たりを付けてから本文を読めます |
 | `read_publication_module` | パブリケーションモジュールを目次として読みます。`pmEntry` の木と、各 `dmRef` / `pmRef` の解決先（ファイル・題名・版） |
 | `resolve_reference` | DMC・PMC・ICN を CSDB のファイルに解決します。ICN は参照元 DM の DOCTYPE 宣言（ファイル名と NOTATION）も返します |
 | `describe_applicability` | 適用性の語彙を返します。ACT の製品属性（id・名前・列挙・識別子）、CCT の条件、PCT の製品（そのまま `product` に使える値）、DM の `applic` 文（id と表示文）、PCT が値を割り当てていない属性。ここでは何も判定しません |
@@ -32,6 +32,10 @@ S1000D® のデータモジュールとパブリケーションモジュール�
 ### 検証状態（`verification`）
 
 既定では XSD 検証だけを行います（`verify: "schema"`）。`verify: "full"` で BREX の連鎖への照合と参照の解決も行い、`verify: "none"` で省きます。省いた工程は `not-run`、XSD が見つからなければ `schema-not-found` と明記され、どちらも `valid` ではありません。XSD に違反した文書は要素の位置が仕様と違う可能性があるため、本文の読み取りも疑ってください。
+
+### 機密区分（`securityClassification`）と大きさ（`size`）
+
+`read_data_module` と `read_publication_module` の応答は、先頭に必ず `securityClassification` を持ちます。`dataModule`（識別・状態部の値）と `inContent`（本文の要素に付いた値ごとの数）で、値の意味はサーバーでは解釈しません（S1000D は値の意味をプロジェクトに委ねています）。エージェントは本文を引用する前にこれを見て扱いを決められます。本文には `size`（節点数・文字数・種類ごとの数・警告の数）が付くので、読む量の見当を付けられます。
 
 ## できないこと
 

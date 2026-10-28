@@ -155,6 +155,56 @@ describe('list_data_modules', () => {
 });
 
 describe('read_data_module', () => {
+  it('応答の先頭に securityClassification（DM の値と本文の要素の値）が必ず付き、本文には size が付く', async () => {
+    const r = await call('read_data_module', { dmc: PROCED, csdbDirs: [fixtures] });
+    expect(Object.keys(r.data).slice(0, 2)).toEqual(['target', 'securityClassification']);
+    expect(r.data.securityClassification.dataModule).toBe('01');
+    expect(r.data.securityClassification.inContent).toEqual({ '02': 1 });
+    expect(r.data.content.size.nodes).toBeGreaterThan(5);
+    expect(r.data.content.size.chars).toBeGreaterThan(0);
+    expect(r.data.content.size.byKind.step).toBe(5);
+    const first: Node = r.data.content.blocks.find((n: Node) => n.kind === 'step');
+    expect((first as unknown as { securityClassification?: string }).securityClassification).toBe(
+      '02',
+    );
+  });
+  it('section "outline" は見出し・番号・最初の 1 文・部分木の大きさだけを返し、本文と参照は返さない', async () => {
+    const r = await call('read_data_module', {
+      dmc: PROCED,
+      csdbDirs: [fixtures],
+      section: 'outline',
+      product: { attributes: { model: 'MV-60' } },
+    });
+    expect(r.isError).toBe(false);
+    expect(r.data.identAndStatus).toBeUndefined();
+    expect(r.data.references).toBeUndefined();
+    expect(r.data.content.blocks).toBeUndefined();
+    expect(r.data.content.size.byKind.step).toBe(5);
+    const outline = r.data.content.outline as Array<Record<string, unknown>>;
+    const top = outline.find((n) => n.kind === 'step' && n.number === '1') as {
+      firstSentence: string;
+      size: { nodes: number; chars: number; admonitions: Record<string, number> };
+      children: Array<{ number: string; applicability?: { state: string } }>;
+      text?: string;
+    };
+    expect(top.text).toBeUndefined();
+    expect(top.firstSentence).toMatch(/前面扉を開ける/);
+    expect(top.size.nodes).toBeGreaterThan(1);
+    expect(top.children.map((c) => c.number)).toEqual(['1.1', '1.2']);
+    expect(top.children[1]!.applicability?.state).toBe('applicable');
+    expect(r.data._notes.some((n: string) => n.includes('section "outline"'))).toBe(true);
+    const shallow = await call('read_data_module', {
+      dmc: PROCED,
+      csdbDirs: [fixtures],
+      section: 'outline',
+      outlineDepth: 1,
+    });
+    expect(
+      (shallow.data.content.outline as Array<{ children: unknown[] }>).every(
+        (n) => n.children.length === 0,
+      ),
+    ).toBe(true);
+  });
   it('product 無し: 本文の構造と verification を返し、適用性は undetermined で displayText だけ', async () => {
     const r = await call('read_data_module', { dmc: PROCED, csdbDirs: [fixtures] });
     expect(r.isError).toBe(false);
@@ -321,5 +371,17 @@ describe('read_publication_module / resolve_reference', () => {
   it('IMF が無ければエラー', async () => {
     const r = await call('read_icn_metadata', { icn: 'C0419-NOTHING', csdbDirs: [fixtures] });
     expect(r.isError).toBe(true);
+  });
+});
+
+describe('securityClassification（PM）', () => {
+  it('read_publication_module の応答にも先頭に付く', async () => {
+    const r = await call('read_publication_module', {
+      pmc: 'KENBAIKI-K0001-OPM01-00',
+      csdbDirs: [fixtures],
+    });
+    expect(r.isError).toBe(false);
+    expect(Object.keys(r.data)[0]).toBe('securityClassification');
+    expect(r.data.securityClassification).toHaveProperty('inContent');
   });
 });

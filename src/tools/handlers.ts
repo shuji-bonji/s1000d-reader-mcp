@@ -13,6 +13,8 @@ import {
   parsePmc,
   productFromPct,
   readContentFromXml,
+  measureContent,
+  outlineContent,
   readDataModuleInfo,
   readDdn,
   readDml,
@@ -23,6 +25,7 @@ import {
   type ApplicExpr,
   type ApplicResult,
   type ContentNode,
+  type ContentSize,
   type CsdbObject,
   type Element,
   type Product,
@@ -106,6 +109,53 @@ function titleOf(xml: string): {
   } catch {
     return {};
   }
+}
+
+/**
+ * 機密区分（securityClassification）の要約。応答の先頭に必ず付け、エージェントが扱いを決められるようにする
+ * （design/agent-platform.md「LLM 活用時の注意点」）。値は解釈しない。本文の要素に付いた区分は値ごとに数える
+ */
+function securitySummary(
+  dataModule: string | undefined,
+  nodes: ContentNode[],
+): { dataModule?: string; inContent: Record<string, number>; note: string } {
+  const inContent: Record<string, number> = {};
+  const walk = (ns: ContentNode[]) => {
+    for (const n of ns) {
+      if (n.securityClassification)
+        inContent[n.securityClassification] = (inContent[n.securityClassification] ?? 0) + 1;
+      walk(n.children);
+    }
+  };
+  walk(nodes);
+  return {
+    dataModule,
+    inContent,
+    note: dataModule
+      ? 'securityClassification values are returned as written (S1000D does not fix their meaning; the project does). Elements in the body may carry their own value (inContent: value → number of elements).'
+      : 'The document declares no securityClassification in its status section.',
+  };
+}
+
+type OutlineWithApplic = ReturnType<typeof outlineContent>[number] & {
+  applicability?: ApplicResult;
+  children: OutlineWithApplic[];
+};
+
+/** 概要の節点に適用性の判定を付ける（本文の annotate と同じ規則。省くことはしない） */
+function annotateOutline(
+  nodes: ReturnType<typeof outlineContent>,
+  evaluator: ApplicEvaluator,
+  product: Product | undefined,
+): OutlineWithApplic[] {
+  return nodes.map((n) => {
+    const node: OutlineWithApplic = {
+      ...n,
+      children: annotateOutline(n.children, evaluator, product),
+    };
+    if (n.applicRefId) node.applicability = evaluator.forRefId(n.applicRefId, product);
+    return node;
+  });
 }
 
 /** 本文の節点に適用性の判定を付け、必要なら notApplicable を省く */
@@ -293,16 +343,41 @@ async function readDataModule(args: Args) {
       'No product was given: applicability is "undetermined" everywhere. Call describe_applicability, then pass "product".',
     );
 
+  const content = section === 'identAndStatus' ? undefined : readContentFromXml(xml);
   const result: Record<string, unknown> = {
     target: status.target,
+    securityClassification: securitySummary(
+      info.identAndStatus?.securityClassification,
+      content?.blocks ?? [],
+    ),
     identAndStatus:
-      section === 'content'
+      section === 'content' || section === 'outline'
         ? undefined
         : { ...info.identAndStatus, applicability: dmApplicability },
     verification: status,
   };
-  if (section !== 'identAndStatus') {
-    const content = readContentFromXml(xml);
+  if (section === 'outline' && content) {
+    // 概要モード: 見出し・手順の番号・最初の 1 文・警告の数・部分木の大きさだけ。参照の一覧は付けない
+    const size: ContentSize = measureContent(content.blocks);
+    const outline = annotateOutline(
+      outlineContent(content.blocks, {
+        maxDepth: args.outlineDepth === undefined ? undefined : int(args.outlineDepth, 3, 1, 50),
+      }),
+      evaluator,
+      product,
+    );
+    notes.push(...content.notes);
+    notes.push(
+      'section "outline": only headings, step numbers, the first sentence and the size of each subtree (nodes / chars / admonitions) are returned. Read the full body with section "content" or "all"; "size" tells how much that will be.',
+    );
+    result.content = {
+      kind: content.kind,
+      structured: content.structured,
+      size,
+      outline: stripLocationDeep(outline),
+      unknownElements: content.unknownElements,
+    };
+  } else if (content) {
     const counter = {
       nodes: 0,
       dropped: 0,
@@ -343,6 +418,7 @@ async function readDataModule(args: Args) {
     result.content = {
       kind: content.kind,
       structured: content.structured,
+      size: measureContent(content.blocks),
       blocks: stripLocationDeep(blocks),
       unknownElements: content.unknownElements,
     };
@@ -424,6 +500,10 @@ async function readPublicationModule(args: Args) {
   const entries = content.blocks.map(resolveEntry);
   const status = await verification(xml, str(args.verify) ?? 'schema', ctx, path);
   return {
+    securityClassification: securitySummary(
+      sel('//pmStatus/security/@securityClassification') || undefined,
+      content.blocks,
+    ),
     identAndStatus: ident,
     verification: status,
     entries,

@@ -1,5 +1,17 @@
 # Changelog
 
+## 0.7.0 (2026-10-28)
+
+### 追加
+
+- `read_data_module` の `section: "outline"`（概要モード。段階 2.5 の作業 7、D-19）。見出し・手順の番号・最初の 1 文と、部分木の大きさ（節点数・文字数・種類ごとの数・警告の数）だけを返し、本文と参照の一覧は返しません。`outlineDepth` で深さを絞れます。適用性の判定は本文と同じ規則で付きます。処理は core 0.7.0 の `outlineContent` / `measureContent`。
+- `read_data_module` と `read_publication_module` の応答の先頭に `securityClassification`（識別・状態部の値 `dataModule` と、本文の要素に付いた値ごとの数 `inContent`）を必ず付けるようにしました。値は解釈しません。本文の各節点にも `securityClassification` が付きます（core 0.7.0）。
+- 本文（`content`）に `size` を付けました。
+
+### 変更
+
+- 依存を core `^0.7.0` に上げました。`instructions` に、大きなデータモジュールは概要モードから読む手順と、機密区分を見てから引用する注意を足しました。
+
 ## 0.6.0 (2026-10-28)
 
 ### 追加

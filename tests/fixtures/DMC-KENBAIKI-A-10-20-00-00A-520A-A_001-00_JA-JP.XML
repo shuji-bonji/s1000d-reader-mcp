@@ -57,7 +57,7 @@
         <reqSafety><safetyRqmts><warning><warningAndCautionPara>扉を開ける前に電源を切る</warningAndCautionPara></warning></safetyRqmts></reqSafety>
       </preliminaryRqmts>
       <mainProcedure>
-        <proceduralStep id="stp-0001">
+        <proceduralStep id="stp-0001" securityClassification="02">
           <para>保守鍵（<internalRef internalRefId="seq-0001" internalRefTargetType="irtt05"/>）で前面扉を開ける。詳細は <dmRef><dmRefIdent>
             <dmCode modelIdentCode="KENBAIKI" systemDiffCode="A" systemCode="10" subSystemCode="2"
               subSubSystemCode="0" assyCode="00" disassyCode="00" disassyCodeVariant="A" infoCode="040"
