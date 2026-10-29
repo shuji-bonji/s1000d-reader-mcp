@@ -11,6 +11,7 @@ import {
   createDirectoryBrexResolver,
   defaultXmlEngine,
   findSchemaDirs,
+  fingerprintDirs,
   parseDmc,
   parsePmc,
   readApplicStatements,
@@ -75,18 +76,30 @@ export function schemaDirs(): SchemaDir[] {
   return dirs;
 }
 
-const indexCache = new Map<string, CsdbIndex>();
+/** 索引と、それを作ったときのフォルダーの指紋 */
+interface IndexEntry {
+  index: CsdbIndex;
+  fingerprint: string;
+}
+const indexCache = new Map<string, IndexEntry>();
+/**
+ * CSDB の索引。フォルダーの組み合わせごとに覚えるが、呼ぶたびに指紋（core の `fingerprintDirs`:
+ * 相対パス・大きさ・更新時刻。ファイルの中身は読まない）を取り直し、索引を作ったときと違えば作り直す。
+ * プロセスが動いている間に writer などが足した DM・PM・ICN も、次の呼び出しから見える
+ */
 export function csdbIndex(options: ContextOptions = {}): CsdbIndex | undefined {
   const dirs = csdbSearchDirs(options);
   if (dirs.length === 0) return undefined;
   const key = dirs.join('\0');
-  let index = indexCache.get(key);
-  if (!index) {
-    index = CsdbIndex.fromDirs(dirs);
-    indexCache.set(key, index);
+  const fingerprint = fingerprintDirs(dirs);
+  let entry = indexCache.get(key);
+  if (!entry || entry.fingerprint !== fingerprint) {
+    entry = { index: CsdbIndex.fromDirs(dirs), fingerprint };
+    indexCache.set(key, entry);
   }
-  return index;
+  return entry.index;
 }
+/** テスト用。`schemaDirCache`（配布物の XSD のフォルダー）は配布物が変わらない前提で覚え続ける */
 export function clearCaches(): void {
   indexCache.clear();
   schemaDirCache.clear();
@@ -187,7 +200,8 @@ export function readObjectText(index: CsdbIndex | undefined, path: string): stri
 }
 
 /** CSDB の中の「適用性リポジトリ」（applic/@applicIdentValue を持つ DM）を集めて、applicIdentValue → applic の表にする */
-const repositoryCache = new Map<CsdbIndex, Map<string, ApplicStatement>>();
+// 索引が作り直されたら古い索引の分は捨てられるよう WeakMap にする
+const repositoryCache = new WeakMap<CsdbIndex, Map<string, ApplicStatement>>();
 export function applicRepository(index: CsdbIndex | undefined): Map<string, ApplicStatement> {
   if (!index) return new Map();
   let repo = repositoryCache.get(index);

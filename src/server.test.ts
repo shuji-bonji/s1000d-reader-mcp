@@ -2,6 +2,7 @@
  * サーバを InMemoryTransport で叩き、ツール定義とハンドラの対応、各ツールの応答の形を確かめる。
  * テストデータは自作（券売機: 説明 DM、手順 DM、ACT、BREX 2 層、PM）。配布物は使わない。
  */
+import { copyFileSync, mkdtempSync, readdirSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -383,5 +384,29 @@ describe('securityClassification（PM）', () => {
     expect(r.isError).toBe(false);
     expect(Object.keys(r.data)[0]).toBe('securityClassification');
     expect(r.data.securityClassification).toHaveProperty('inContent');
+  });
+});
+
+describe('起動後に増えたファイル', () => {
+  it('索引を作った後に DM を足すと、次の list_data_modules から見える', async () => {
+    clearCaches();
+    const csdb = mkdtempSync(join(tmpdir(), 's1000d-reader-mcp-fresh-'));
+    try {
+      for (const f of readdirSync(fixtures)) copyFileSync(join(fixtures, f), join(csdb, f));
+      const before = await call('list_data_modules', { csdbDirs: [csdb] });
+      expect(before.data.page.total).toBe(5);
+
+      // サーバーを動かしたまま、別のプロセス（writer など）が DM を書いた状況
+      const added = 'DMC-KENBAIKI-A-10-20-00-00A-040A-D_003-00_JA-JP.XML';
+      copyFileSync(
+        join(fixtures, 'DMC-KENBAIKI-A-10-20-00-00A-040A-D_002-01_JA-JP.XML'),
+        join(csdb, added),
+      );
+      const after = await call('list_data_modules', { csdbDirs: [csdb] });
+      expect(after.data.page.total).toBe(6);
+    } finally {
+      rmSync(csdb, { recursive: true, force: true });
+      clearCaches();
+    }
   });
 });
