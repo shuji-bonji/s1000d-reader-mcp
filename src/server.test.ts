@@ -148,10 +148,33 @@ describe('list_data_modules', () => {
       techName: '券売機 操作マニュアル',
     });
   });
-  it('CSDB が無ければエラー', async () => {
+  it('CSDB が無ければ no-csdb（isError ではなく、writer と同じ形。#2）', async () => {
     const r = await call('list_data_modules', {});
-    expect(r.isError).toBe(true);
-    expect(r.data.error).toContain('S1000D_CSDB_DIR');
+    expect(r.isError).toBe(false);
+    expect(r.data.error).toMatchObject({ code: 'no-csdb', path: '/csdbDirs' });
+    expect(r.data.error.detail).toContain('S1000D_CSDB_DIR');
+  });
+
+  it('csdbDirs を渡すと S1000D_CSDB_DIR は使わず、存在しないフォルダーは _notes で知らせる（#3）', async () => {
+    const empty = mkdtempSync(join(tmpdir(), 's1000d-reader-mcp-empty-'));
+    const nowhere = join(tmpdir(), 's1000d-reader-mcp-no-such-csdb');
+    process.env.S1000D_CSDB_DIR = fixtures;
+    clearCaches();
+    try {
+      const fromEnv = await call('list_data_modules', {});
+      expect(fromEnv.data.searched).toEqual([fixtures]);
+      const r = await call('list_data_modules', { csdbDirs: [empty, nowhere] });
+      expect(r.data.searched).toEqual([empty]);
+      expect(r.data.page.total).toBe(0);
+      expect(r.data._notes.join(' ')).toContain(nowhere);
+      const only = await call('list_data_modules', { csdbDirs: [nowhere] });
+      expect(only.data.error.code).toBe('no-csdb');
+      expect(only.data.error.detail).toContain(nowhere);
+    } finally {
+      delete process.env.S1000D_CSDB_DIR;
+      clearCaches();
+      rmSync(empty, { recursive: true, force: true });
+    }
   });
 });
 
@@ -298,8 +321,11 @@ describe('read_data_module', () => {
       dmc: 'KENBAIKI-A-99-00-00-00A-040A-D',
       csdbDirs: [fixtures],
     });
-    expect(r.isError).toBe(true);
-    expect(r.data.error).toContain('was not found');
+    expect(r.isError).toBe(false);
+    expect(r.data.error).toMatchObject({ code: 'not-found', path: '/dmc' });
+    expect(r.data.error.detail).toContain('was not found');
+    const file = await call('read_data_module', { path: join(fixtures, 'no-such.XML') });
+    expect(file.data.error).toMatchObject({ code: 'file-not-found', path: '/path' });
   });
 });
 
@@ -371,7 +397,8 @@ describe('read_publication_module / resolve_reference', () => {
   });
   it('IMF が無ければエラー', async () => {
     const r = await call('read_icn_metadata', { icn: 'C0419-NOTHING', csdbDirs: [fixtures] });
-    expect(r.isError).toBe(true);
+    expect(r.isError).toBe(false);
+    expect(r.data.error).toMatchObject({ code: 'not-found', path: '/icn' });
   });
 });
 

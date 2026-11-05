@@ -32,7 +32,7 @@ import {
   type VerificationStatus,
   type VerifyOptions,
 } from '@shuji-bonji/s1000d-core';
-import { ENV, LIMITS } from '../config.js';
+import { LIMITS } from '../config.js';
 import {
   applicRepository,
   brexResolver,
@@ -46,7 +46,9 @@ import {
   schemaDirs,
   schemaValidator,
   type ContextOptions,
+  noCsdbError,
 } from '../services/context.js';
+import { ToolInputError } from '../errors.js';
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type Args = Record<string, any>;
@@ -197,7 +199,7 @@ function stripLocationDeep<T extends { location?: unknown; children?: T[] }>(nod
 async function listDataModules(args: Args) {
   const ctx: ContextOptions = { extraDirs: strArray(args.csdbDirs) };
   const index = csdbIndex(ctx);
-  if (!index) throw new Error(`No CSDB folders. Pass "csdbDirs" or set ${ENV.csdbDirs}.`);
+  if (!index) throw noCsdbError(ctx);
   const include = new Set(strArray(args.include) ?? ['dm']);
   const f = (args.filter ?? {}) as Record<string, string | undefined>;
   const text = str(f.text)?.toLowerCase();
@@ -437,7 +439,9 @@ async function readPublicationModule(args: Args) {
   );
   const doc = defaultXmlEngine.parse(xml).document;
   if (doc.documentElement?.nodeName !== 'pm')
-    throw new Error(
+    throw new ToolInputError(
+      'input-error',
+      path ? '/path' : '/xml',
       `Not a publication module (root element is <${doc.documentElement?.nodeName}>)`,
     );
   const sel = (e: string) => defaultXmlEngine.selectString(e, doc);
@@ -514,7 +518,7 @@ async function readPublicationModule(args: Args) {
 async function resolveReference(args: Args) {
   const ctx: ContextOptions = { extraDirs: strArray(args.csdbDirs) };
   const index = csdbIndex(ctx);
-  if (!index) throw new Error(`No CSDB folders. Pass "csdbDirs" or set ${ENV.csdbDirs}.`);
+  if (!index) throw noCsdbError(ctx);
   const describe = (o: CsdbObject) => ({
     path: o.path,
     fileName: o.fileName,
@@ -523,7 +527,7 @@ async function resolveReference(args: Args) {
   });
   if (str(args.dmc)) {
     const dmc = parseDmc(str(args.dmc)!);
-    if (!dmc.ok) throw new Error(dmc.error);
+    if (!dmc.ok) throw new ToolInputError('input-error', '/dmc', dmc.error);
     const found = index.findDataModules(dmc.value);
     return {
       kind: 'dmRef',
@@ -534,7 +538,7 @@ async function resolveReference(args: Args) {
   }
   if (str(args.pmc)) {
     const pmc = parsePmc(str(args.pmc)!);
-    if (!pmc.ok) throw new Error(pmc.error);
+    if (!pmc.ok) throw new ToolInputError('input-error', '/pmc', pmc.error);
     return {
       kind: 'pmRef',
       target: formatPmc(pmc.value),
@@ -547,8 +551,9 @@ async function resolveReference(args: Args) {
     let declared: { systemId?: string; notation?: string } | undefined;
     if (str(args.fromPath)) {
       const refs = collectReferences(
-        defaultXmlEngine.parse(loadXml({ path: str(args.fromPath) }, LIMITS.maxInlineXmlBytes))
-          .document,
+        defaultXmlEngine.parse(
+          loadXml({ path: str(args.fromPath) }, LIMITS.maxInlineXmlBytes, 'fromPath'),
+        ).document,
       );
       const d = refs.entities.get(icn) ?? refs.entities.get(icn.replace(/^ICN-/, ''));
       if (d) declared = { systemId: d.systemId, notation: d.notation };
@@ -577,7 +582,7 @@ async function resolveReference(args: Args) {
       searched: csdbSearchDirs(ctx),
     };
   }
-  throw new Error('One of "dmc", "pmc" or "icn" is required');
+  throw new ToolInputError('input-error', '/', 'One of "dmc", "pmc" or "icn" is required');
 }
 
 function propertiesUsed(expr: ApplicExpr | undefined, out: Set<string>): void {
@@ -649,18 +654,25 @@ async function readIcnMetadata(args: Args) {
     xml = loadXml({ path, xml: str(args.xml) }, LIMITS.maxInlineXmlBytes);
   } else if (str(args.icn)) {
     const index = csdbIndex(ctx);
-    if (!index) throw new Error(`No CSDB folders. Pass "csdbDirs" or set ${ENV.csdbDirs}.`);
+    if (!index) throw noCsdbError(ctx);
     const key = str(args.icn)!.toUpperCase().replace(/^ICN-/, '');
     const found = index.objects.find(
       (o) => o.kind === 'imf' && o.fileName.toUpperCase().includes(key),
     );
-    if (!found) throw new Error(`No IMF for ICN ${args.icn} in: ${csdbSearchDirs(ctx).join(', ')}`);
+    if (!found)
+      throw new ToolInputError(
+        'not-found',
+        '/icn',
+        `No IMF for ICN ${args.icn} in: ${csdbSearchDirs(ctx).join(', ')}`,
+      );
     path = found.path;
     xml = index.read(found);
-  } else throw new Error('One of "path", "xml" or "icn" is required');
+  } else throw new ToolInputError('input-error', '/', 'One of "path", "xml" or "icn" is required');
   const doc = defaultXmlEngine.parse(xml).document;
   if (doc.documentElement?.nodeName !== 'icnMetadataFile')
-    throw new Error(
+    throw new ToolInputError(
+      'input-error',
+      path ? '/path' : '/xml',
       `Not an ICN metadata file (root element is <${doc.documentElement?.nodeName}>)`,
     );
   const sel = (e: string) => defaultXmlEngine.selectString(e, doc);

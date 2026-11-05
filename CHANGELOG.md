@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.8.0 (2026-11-06)
+
+Grok Build の試用（hub の `eval/hosts/grok-build/reports/2026-11/FINDINGS.md` の F-02・F-03）で見つかった点を直しました（[#2](https://github.com/shuji-bonji/s1000d-reader-mcp/issues/2)・[#3](https://github.com/shuji-bonji/s1000d-reader-mcp/issues/3)）。依存の `@shuji-bonji/s1000d-core` は `^0.8.2` のままです。
+
+### 変更（動きが変わります）
+
+- **ツール引数の `csdbDirs` は、設定を置き換えます。** これまでは、渡したフォルダーと `S1000D_CSDB_DIR`・設定ファイル（`~/.config/s1000d-stack/config.json`）の `csdbDirs` を足し合わせていたため、渡したフォルダーだけを一覧にするつもりでも、設定側のフォルダーの DM が結果に混ざりました。引数で渡したときは、そのフォルダーだけを使います。渡さないときは、これまでどおり設定を使います。BREX は、これまでどおり `S1000D_SPEC_DIR`（既定 BREX）も探します。
+- **存在しないフォルダーは `_notes` で知らせます。** これまでは、渡したフォルダーが無いと何も知らせずに落としていました。使わなかったフォルダーを `_notes` に書き、1 つも残らないときは `no-csdb` を返します（詳細に、無かったフォルダーを書きます）。
+- **呼び出し側が直せる誤りは、`isError` ではなく `{"error": {"code", "path", "detail"}}` で返します**（s1000d-writer-mcp と同じ形）。`code` は `file-not-found`（`path`・`fromPath` にファイルが無い）・`no-csdb`（CSDB のフォルダーが 1 つも無い）・`not-found`（`dmc`・`pmc`・`icn` が CSDB に無い）・`input-error`（DMC・PMC の形が違う、必要な引数が無い、PM・IMF でない文書を渡したなど）。`path` は直す引数の場所（`/path`、`/csdbDirs` など）です。これまでの `{"error": "…"}`（文字列）と `isError: true` は、想定外の失敗（サーバーの障害）にだけ使います。
+
 ## 0.7.1 (2026-10-29)
 
 hub の E2E テスト（`e2e/`）で見つかった 2 点を直しました。ツールの入出力は変えていません。依存の `@shuji-bonji/s1000d-core` は `^0.8.2` です。

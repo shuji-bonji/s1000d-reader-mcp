@@ -5,6 +5,7 @@ import { McpServer, fromJsonSchema } from '@modelcontextprotocol/server';
 import { ENV, PACKAGE_INFO } from './config.js';
 import { tools } from './tools/definitions.js';
 import { toolHandlers } from './tools/handlers.js';
+import { ToolInputError } from './errors.js';
 
 /**
  * `initialize` の応答としてクライアントへ返す説明。README やツール説明より早く読まれる。
@@ -21,13 +22,15 @@ It does NOT do the following:
 - It does not return applicability expressions (assert/evaluate). The server evaluates them for the "product" you pass and returns applicable / notApplicable / undetermined with the human-readable displayText. "undetermined" means the product lacks a needed value (see reason) or no product was given — it is not "does not apply". Call describe_applicability to learn the attribute ids and values (ACT/CCT/PCT) and the values the PCT leaves unassigned.
 - It does not decide S1000D conformance and does not list BREX or XSD errors in detail; use s1000d-verify-mcp for that and s1000d-brex-mcp to explain BREX rules.
 - It does not summarize or translate. It keeps headings, step numbers, admonition levels and references ([→ DMC title] inline and in refs) so you can.
-- It does not ship any S1000D specification, XSD or sample. XSD validation needs ${ENV.specDir} (the extracted S1000D distribution) or {"specDir": "/absolute/path"} in ~/.config/s1000d-stack/config.json (for hosts that do not pass environment variables to plugins); the CSDB is found via ${ENV.csdbDirs}, "csdbDirs" in that config file, or the "csdbDirs" argument.
+- It does not ship any S1000D specification, XSD or sample. XSD validation needs ${ENV.specDir} (the extracted S1000D distribution) or {"specDir": "/absolute/path"} in ~/.config/s1000d-stack/config.json (for hosts that do not pass environment variables to plugins); the CSDB is found via ${ENV.csdbDirs}, "csdbDirs" in that config file, or the "csdbDirs" argument. When the "csdbDirs" argument is given, it replaces the other two (it is not added to them); folders that do not exist are skipped and listed in _notes.
 
 Reading results: if verification.schema is schema-not-found or invalid, the structure may be misread — say so. Elements the reader does not know are kept as kind "unknown" with their text and counted in content.unknownElements. Data module kinds other than descript / proced / process / fault / pm return structured: false with identAndStatus only. References to the specification (modelIdentCode "S1000D") are not listed as unresolved.
 
 Costly options: read_data_module with verify="full" runs BREX checks (about 0.1 s per data module). list_data_modules reads every file for titles; narrow with filter.
 
-Budget: on a large data module call read_data_module with section "outline" first. It returns headings, step numbers, the first sentence of each and the size of each subtree (nodes / chars / warnings), without the body or the references; content.size says how big the full body is. Then read section "content" (optionally with maxNodes) once you know what you need.`;
+Budget: on a large data module call read_data_module with section "outline" first. It returns headings, step numbers, the first sentence of each and the size of each subtree (nodes / chars / warnings), without the body or the references; content.size says how big the full body is. Then read section "content" (optionally with maxNodes) once you know what you need.
+
+An input the server cannot use comes back as {"error": {"code": "...", "path": "/path", "detail": "..."}} (not as a tool failure), in the same shape as s1000d-writer-mcp. code is "file-not-found" (the file at that argument does not exist), "no-csdb" (no CSDB folder exists; pass "csdbDirs"), "not-found" (the DMC, PMC or ICN is not in the CSDB) or "input-error" (the argument is malformed or missing). path names the argument to fix. Fix it and call again.`;
 
 export function buildServer(): McpServer {
   const server = new McpServer(
@@ -48,6 +51,11 @@ export function buildServer(): McpServer {
           const result = await handler(args as Record<string, unknown>);
           return { content: [{ type: 'text' as const, text: JSON.stringify(result, null, 2) }] };
         } catch (error) {
+          // 呼び出し側が直せる、想定内の失敗は isError にせず、writer と同じ形で返す
+          if (error instanceof ToolInputError) {
+            const body = { error: { code: error.code, path: error.path, detail: error.detail } };
+            return { content: [{ type: 'text' as const, text: JSON.stringify(body, null, 2) }] };
+          }
           const message = error instanceof Error ? error.message : String(error);
           return {
             content: [{ type: 'text' as const, text: JSON.stringify({ error: message }, null, 2) }],

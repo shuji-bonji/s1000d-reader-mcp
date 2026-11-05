@@ -10,7 +10,7 @@ const csdbDirsParam = {
   type: 'array',
   items: { type: 'string' },
   description:
-    'Extra CSDB folders to search (in addition to S1000D_CSDB_DIR) for data modules by DMC, referenced objects, ACT/CCT/PCT and BREX.',
+    'CSDB folders to search for data modules by DMC, referenced objects, ACT/CCT/PCT and BREX (default: S1000D_CSDB_DIR / the config file). When given, these folders replace S1000D_CSDB_DIR and the csdbDirs of the config file (they are not added to them); folders that do not exist are skipped and reported in _notes.',
 } as const;
 const pathParam = { type: 'string', description: 'File path of the document.' } as const;
 const xmlParam = {
