@@ -378,6 +378,7 @@ async function readDataModule(args: Args) {
       size,
       outline: stripLocationDeep(outline),
       unknownElements: content.unknownElements,
+      notReadElements: content.notReadElements,
     };
   } else if (content) {
     const counter = {
@@ -423,6 +424,7 @@ async function readDataModule(args: Args) {
       size: measureContent(content.blocks),
       blocks: stripLocationDeep(blocks),
       unknownElements: content.unknownElements,
+      notReadElements: content.notReadElements,
     };
     result.references = { resolved: references, unresolved };
   }
