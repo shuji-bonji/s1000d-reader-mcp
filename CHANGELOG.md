@@ -1,8 +1,8 @@
 # Changelog
 
-## 未リリース
+## 0.9.0 (2026-11-16)
 
-依存の `@shuji-bonji/s1000d-core` を `^0.9.0` に上げました。`read_data_module` の応答が、次のように変わります（s1000d-stack の docs/design/core-preliminary-rqmts.md、D-31）。
+依存の `@shuji-bonji/s1000d-core` を `^0.10.0` に上げました（0.8.0 の時点は `^0.8.2`）。`read_data_module` の応答が、次のように変わります（s1000d-stack の docs/design/core-preliminary-rqmts.md、D-31）。
 
 ### 変更（応答が変わります）
 
@@ -10,6 +10,7 @@
 - **共通の警告・注意への参照（`@warningRefs`・`@cautionRefs`）を読みます。** `safetyRqmts` が参照だけを持つ DM で、安全の要件が何も返っていませんでした。
 - **プロセス DM の `dmIf` の条件の文を返します。** `kind: "if"` の節点の `question` に、`expression/@humanReadableForm` の文が入ります。これまでは `expression` が `unknown` になり、条件が読めませんでした。
 - **参照に、版・言語・DM の中の場所（`fragment`）・適用性・題名を返します。**
+- **品目の NATO 物品番号（`natoStockNumber`）を返します**（core 0.10.0）。`equipment`・`supply`・`spare` の節点の `natoStockNumber` に、`6850-00-181-7933` の形で入ります。要約の文にも「NSN …」が入ります。core 0.9 では、要素名だけを `attrs.otherIdentifiers` と `notReadElements` に返していました。
 - **`content.notReadElements` を足しました。** あることは分かっていても中身を読んでいない要素・属性の名前と数です。空でないときは、応答に入っていない内容がその DM にあります。
 
 ## 0.8.0 (2026-11-06)
