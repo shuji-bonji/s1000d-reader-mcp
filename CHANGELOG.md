@@ -1,5 +1,24 @@
 # Changelog
 
+## 0.11.0 (2026-11-17)
+
+依存の `@shuji-bonji/s1000d-core` を `^0.12.0` に上げました。このサーバーのコードは変えていませんが、core が本文を読む範囲を広げたので、`read_data_module` の応答が次のように変わります。Issue 7 の Bike Samples では、本文を構造化して読むデータモジュールのどれにも、知らない要素（`kind: "unknown"`）が無くなりました。
+
+### 変更（応答が変わります）
+
+- **故障の報告（`faultReporting`）を、節点として返します。** これまでは、ほとんどの要素が `kind: "unknown"` の節点でした。不具合 1 件（`isolatedFault`・`detectedFault`・`observedFault`・`correlatedFault`）は `kind: "section"` の節点で、`id` と `attrs.faultCode` を持ちます。不具合を節点にしたので、fault の応答は階層が 1 段増えます。
+- **回路遮断器の一覧（`circuitBreakerDescrGroup`）を返します。** グループは `kind: "list"`、遮断器 1 つは `listItem` です。`notReadElements` の `circuitBreakerDescrGroup` は無くなりました。
+- **`dmIf` と `dmLoop` の条件の式を `attrs.expression` に返します。** 式は評価せず、文にします（例: `not(level equal "experienced")`）。`dmLoop` は `kind: "sequence"`・`element: "dmLoop"` の節点です。`question` に入るのは、人が書いた文（`humanReadableForm`）だけです。
+- **プロセス DM の変数の宣言・代入・検査を返します。** `variableDeclarations` は `kind: "list"` の節点です。`userEntry` の `variableRef` は、`unknown` に数えなくなりました。
+- **品目の危険性（`hazards`）、ほかの識別子、備考の脚注（`footnoteRemarks`）を返します。**
+- **作業の場所・所要時間・間隔（`productionMaintData`）と、図の改訂の理由（`graphic/reasonForAmendment`）を返します。**
+
+節点の形の詳しい決まりは、s1000d-core の CHANGELOG の 0.12.0 にあります。
+
+### 文書
+
+- ツールの説明文と README で、読んでいない要素の例を、core 0.12.0 でも残るもの（`behavior`・`pubMedia` など）に変えました。
+
 ## 0.10.0 (2026-11-16)
 
 依存の `@shuji-bonji/s1000d-core` を `^0.11.0` に上げました。このサーバーのコードは変えていませんが、core が本文を読む範囲を広げたので、`read_data_module` の応答が次のように変わります（次の版は 0.10.0）。
