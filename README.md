@@ -42,7 +42,7 @@ Every `read_data_module` and `read_publication_module` response starts with `sec
 > [!WARNING]
 > - **It does not summarise or translate.** Its job is to return the material a summary needs (headings, step numbers, warning types, reference targets) without dropping anything.
 > - **It does not judge conformance to S1000D.** Read the details of XSD and BREX violations with `s1000d-verify-mcp`, and the explanation of BREX rules with `s1000d-brex-mcp`.
-> - The body is structured for 5 types only: `descript` / `proced` / `process` / `fault` / `pm`. Other types return `content.structured: false` and only the identification and status section. Unknown elements are kept as `kind: "unknown"` with their text only and counted in `content.unknownElements`. Elements and attributes the reader knows but does not read (such as `productionMaintData`) are counted in `content.notReadElements`; when it is not empty, the data module holds content that is not in the response.
+> - The body is structured for 5 types only: `descript` / `proced` / `process` / `fault` / `pm`. Other types return `content.structured: false` and only the identification and status section. Unknown elements are kept as `kind: "unknown"` with their text only and counted in `content.unknownElements`. Elements and attributes the reader knows but does not read (such as `behavior` and `pubMedia`) are counted in `content.notReadElements`; when it is not empty, the data module holds content that is not in the response.
 
 ## Configuration
 

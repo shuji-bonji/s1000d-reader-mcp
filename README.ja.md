@@ -42,7 +42,7 @@ S1000D® のデータモジュールとパブリケーションモジュール�
 > [!WARNING]
 > - **要約・翻訳はしません。** 要約に要る材料（見出し、手順の番号、警告の種類、参照先）を落とさずに返すのが仕事です。
 > - **S1000D への準拠は判定しません。** XSD・BREX の違反の中身は `s1000d-verify-mcp`、BREX のルールの説明は `s1000d-brex-mcp` で読んでください。
-> - 本文を構造化しているのは `descript` / `proced` / `process` / `fault` / `pm` の 5 種です。他の種類は `content.structured: false` で、識別・状態部だけを返します。知らない要素は `kind: "unknown"` として文だけを残し、`content.unknownElements` に数えます。あることは分かっていても中身を読んでいない要素・属性（`productionMaintData` など）は、`content.notReadElements` に数えます。空でないときは、応答に入っていない内容がその DM にあります。
+> - 本文を構造化しているのは `descript` / `proced` / `process` / `fault` / `pm` の 5 種です。他の種類は `content.structured: false` で、識別・状態部だけを返します。知らない要素は `kind: "unknown"` として文だけを残し、`content.unknownElements` に数えます。あることは分かっていても中身を読んでいない要素・属性（`behavior`・`pubMedia` など）は、`content.notReadElements` に数えます。空でないときは、応答に入っていない内容がその DM にあります。
 
 ## 設定
 
