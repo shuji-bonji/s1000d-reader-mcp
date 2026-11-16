@@ -346,6 +346,12 @@ async function readDataModule(args: Args) {
     );
 
   const content = section === 'identAndStatus' ? undefined : readContentFromXml(xml);
+  // 節点の場所（location.path）は、s1000d-writer-mcp の edit_data_module に渡すときだけ要る。既定では返さない
+  const includeLocation = args.includeLocation === true;
+  if (includeLocation && content)
+    notes.push(
+      'includeLocation: every node carries "location" (path, line, column) in the document as it is now. Copy location.path as it is into s1000d-writer-mcp edit_data_module (at / to); do not build paths yourself. A paragraph that is returned as the "text" of its parent node (for example the first paragraph of a step) has no node of its own, so it has no location.',
+    );
   const result: Record<string, unknown> = {
     target: status.target,
     securityClassification: securitySummary(
@@ -376,7 +382,7 @@ async function readDataModule(args: Args) {
       kind: content.kind,
       structured: content.structured,
       size,
-      outline: stripLocationDeep(outline),
+      outline: includeLocation ? outline : stripLocationDeep(outline),
       unknownElements: content.unknownElements,
       notReadElements: content.notReadElements,
     };
@@ -422,7 +428,7 @@ async function readDataModule(args: Args) {
       kind: content.kind,
       structured: content.structured,
       size: measureContent(content.blocks),
-      blocks: stripLocationDeep(blocks),
+      blocks: includeLocation ? blocks : stripLocationDeep(blocks),
       unknownElements: content.unknownElements,
       notReadElements: content.notReadElements,
     };

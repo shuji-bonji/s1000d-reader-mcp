@@ -107,6 +107,11 @@ export const tools: ToolDefinition[] = [
             'Which part to return (default all). "outline" returns only headings, step numbers, the first sentence and the size (nodes / chars / admonitions) of each subtree — call it first on a large data module to decide what to read.',
           default: 'all',
         },
+        includeLocation: {
+          type: 'boolean',
+          description:
+            'Add "location" (path, line, column) to every node of the body or the outline (default false). Pass true when you are going to edit the data module with s1000d-writer-mcp edit_data_module: its "at" and "to" take location.path as returned here.',
+        },
         outlineDepth: {
           type: 'integer',
           description:

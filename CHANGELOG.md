@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.12.0 (2026-11-17)
+
+### 追加
+
+- **`read_data_module` に `includeLocation` を足しました。** `true` を渡すと、本文（`content.blocks`）と概要（`content.outline`）の各節点に、`location`（`path`・`line`・`column`）が付きます。s1000d-writer-mcp の `edit_data_module` は、編集する場所を `location.path` で受け取ります。これまでは応答から `location` を外していたので、場所を得る手段がありませんでした。既定は `false` で、応答はこれまでと変わりません。
+  - 親の節点の `text` として返る段落（手順の最初の段落など）は、節点が無いので `location` もありません。
+
 ## 0.11.1 (2026-11-17)
 
 依存の `@shuji-bonji/s1000d-core` を `^0.13.0` に上げました。core 0.13.0 の変更は、既にあるデータモジュールの構造を変える編集（`editContent`）の追加です。このサーバーの動きは変わりません。

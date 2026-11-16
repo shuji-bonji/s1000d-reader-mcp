@@ -229,6 +229,48 @@ describe('read_data_module', () => {
       ),
     ).toBe(true);
   });
+  it('includeLocation: true のときだけ、本文と概要の節点に location（path・line・column）が付く', async () => {
+    const plain = await call('read_data_module', {
+      dmc: PROCED,
+      csdbDirs: [fixtures],
+      section: 'content',
+    });
+    type Located = {
+      kind: string;
+      number?: string;
+      location: { path: string; line?: number };
+      children: Located[];
+    };
+    const has = (nodes: Array<Record<string, unknown>>): boolean =>
+      nodes.some(
+        (n) => 'location' in n || has((n.children as Array<Record<string, unknown>>) ?? []),
+      );
+    expect(has(plain.data.content.blocks)).toBe(false);
+
+    const located = await call('read_data_module', {
+      dmc: PROCED,
+      csdbDirs: [fixtures],
+      section: 'content',
+      includeLocation: true,
+    });
+    const steps = (located.data.content.blocks as Located[]).filter((n) => n.kind === 'step');
+    expect(steps[0]!.location.path).toBe(
+      '/dmodule/content/procedure/mainProcedure/proceduralStep[1]',
+    );
+    expect(typeof steps[0]!.location.line).toBe('number');
+    expect(steps[0]!.children.every((c) => typeof c.location.path === 'string')).toBe(true);
+    expect(located.data._notes.some((n: string) => n.includes('edit_data_module'))).toBe(true);
+
+    const outline = await call('read_data_module', {
+      dmc: PROCED,
+      csdbDirs: [fixtures],
+      section: 'outline',
+      includeLocation: true,
+    });
+    const top = (outline.data.content.outline as Located[]).find((n) => n.number === '1');
+    expect(top!.location.path).toBe('/dmodule/content/procedure/mainProcedure/proceduralStep[1]');
+  });
+
   it('product 無し: 本文の構造と verification を返し、適用性は undetermined で displayText だけ', async () => {
     const r = await call('read_data_module', { dmc: PROCED, csdbDirs: [fixtures] });
     expect(r.isError).toBe(false);
