@@ -1,5 +1,19 @@
 # Changelog
 
+## 0.10.0 (2026-11-16)
+
+依存の `@shuji-bonji/s1000d-core` を `^0.11.0` に上げました。このサーバーのコードは変えていませんが、core が本文を読む範囲を広げたので、`read_data_module` の応答が次のように変わります（次の版は 0.10.0）。
+
+### 変更（応答が変わります）
+
+- **不具合の説明（`faultDescr`）を返します。** `kind: "para"`・`element: "faultDescr"` の節点で、`attrs.faultCode` に同じ親の `fault` のコードが入ります。これまでは何も返していませんでした。
+- **メニューの選択肢（`menuChoice`）と、利用者への知らせ（`message`）の文を返します。** 選択肢は `listItem` の `text`、知らせは `prompt` ごとの `para` です。
+- **図の凡例（`figure/legend`）と、定義リストの見出し（`definitionListHeader`）を返します。** 凡例は `figure` の `children`、見出しは `list` の `attrs.termTitle`・`attrs.definitionTitle` です。
+- **折り込み（`foldout`）の中の図・表を、そのままの節点で返します。** これまでは `element: "foldout"` の `figure` 1 つで、中の図の題名と `id` が落ちていました。`element: "foldout"` の節点は返らなくなります。
+- **外部の文書の版と発行日を返します。** `externalPubRef` の参照の `externalPubIssue`・`externalPubIssueDate` です。
+- **入れ子の品目（`embedded…Descr`）を返します。** 親の品目（`equipment`・`supply`・`spare`）の `children` に入ります。
+- **`content.notReadElements` に、プロセス DM の変数の操作（`variableDeclarations`・`variablePreSet`・`variablePostSet`・`validate`・`assertion`）と、図の改訂の理由（`reasonForAmendment`）を数えます。** 中身はこれまでどおり返しませんが、あることを知らせます。
+
 ## 0.9.0 (2026-11-16)
 
 依存の `@shuji-bonji/s1000d-core` を `^0.10.0` に上げました（0.8.0 の時点は `^0.8.2`）。`read_data_module` の応答が、次のように変わります（s1000d-stack の docs/design/core-preliminary-rqmts.md、D-31）。
