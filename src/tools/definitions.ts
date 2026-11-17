@@ -110,7 +110,7 @@ export const tools: ToolDefinition[] = [
         includeLocation: {
           type: 'boolean',
           description:
-            'Add "location" (path, line, column) to every node of the body or the outline (default false). Pass true when you are going to edit the data module with s1000d-writer-mcp edit_data_module: its "at" and "to" take location.path as returned here.',
+            'Add "location" (path, line, column) to every node of the body or the outline (default false). Pass true when you are going to edit the data module with s1000d-writer-mcp edit_data_module: its "at" and "to" take location.path as returned here. A step also gets "textLocations": the locations of the paragraphs joined into its "text", in order.',
         },
         outlineDepth: {
           type: 'integer',

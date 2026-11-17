@@ -1,5 +1,17 @@
 # Changelog
 
+## 0.13.0 (2026-11-17)
+
+依存の `@shuji-bonji/s1000d-core` を `^0.14.0` に上げ、その読み取りに合わせました。次の版は 0.13.0 です（応答に項目が増えます。これまでの項目は変わりません）。
+
+### 追加
+
+- **`read_data_module` が、更新の理由と変更の印を返します。** これまでは、どちらも応答に無く、無いことの知らせもありませんでした。値は書かれたまま返し、何が変わったかや、印の付け方が仕様に合っているかは判定しません。
+  - `identAndStatus.reasonForUpdates`: `dmStatus/reasonForUpdate` を並びの順に返します（`id`・`updateReasonType`・`updateHighlight`・`applicRefId`・`paragraphs`）。1 つも無ければ、項目そのものがありません。
+  - 節点と参照の `change`: その要素に書かれている `changeType`・`changeMark`・`reasonForUpdateRefIds`（配列）です。
+  - `content.changeMarks`: 3 つの属性のどれかを持つ要素と `changeInline` を、文書の順にすべて返します（`element`・`path`・`line`・`column` と 3 つの属性）。節点にならない要素（`title`、表の `row`、手順の `text` にまとめた段落など）と、本文を構造化して読まない種類のデータモジュール（`structured: false`）の要素も入ります。`section: "outline"` でも返します。`includeLocation` が無くても、`path` は返します。
+- **`includeLocation: true` のとき、手順の節点に `textLocations` が付きます。** 手順の `text` にまとめた段落ごとの `location` を、並びの順に持ちます。`edit_data_module` で、その段落だけを取り除く・移すときの場所に使えます。0.12.0 の「親の節点の `text` として返る段落は `location` もありません」は、手順については当たらなくなりました。リストの項目（段落が 1 つで、その段落が `text` になるもの）には付きません。
+
 ## 0.12.0 (2026-11-17)
 
 ### 追加

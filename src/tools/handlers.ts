@@ -188,10 +188,14 @@ function annotate(
   return out;
 }
 
-function stripLocationDeep<T extends { location?: unknown; children?: T[] }>(nodes: T[]): T[] {
+/** 節点の場所（`location` と、手順の `textLocations`）を外す */
+function stripLocationDeep<
+  T extends { location?: unknown; textLocations?: unknown; children?: T[] },
+>(nodes: T[]): T[] {
   return nodes.map((n) => {
-    const { location, ...rest } = n;
+    const { location, textLocations, ...rest } = n;
     void location;
+    void textLocations;
     return { ...rest, children: n.children ? stripLocationDeep(n.children) : [] } as T;
   });
 }
@@ -350,7 +354,7 @@ async function readDataModule(args: Args) {
   const includeLocation = args.includeLocation === true;
   if (includeLocation && content)
     notes.push(
-      'includeLocation: every node carries "location" (path, line, column) in the document as it is now. Copy location.path as it is into s1000d-writer-mcp edit_data_module (at / to); do not build paths yourself. A paragraph that is returned as the "text" of its parent node (for example the first paragraph of a step) has no node of its own, so it has no location.',
+      'includeLocation: every node carries "location" (path, line, column) in the document as it is now. Copy location.path as it is into s1000d-writer-mcp edit_data_module (at / to); do not build paths yourself. The paragraphs of a step that are joined into its "text" have no node of their own; the step carries "textLocations" instead, one location per joined paragraph in document order (textLocations[0] is the first paragraph of "text"). Use textLocations[i].path to remove or move that paragraph alone. A list item whose single paragraph is its "text" has no textLocations: edit the list item itself.',
     );
   const result: Record<string, unknown> = {
     target: status.target,
@@ -385,6 +389,7 @@ async function readDataModule(args: Args) {
       outline: includeLocation ? outline : stripLocationDeep(outline),
       unknownElements: content.unknownElements,
       notReadElements: content.notReadElements,
+      changeMarks: content.changeMarks,
     };
   } else if (content) {
     const counter = {
@@ -431,6 +436,7 @@ async function readDataModule(args: Args) {
       blocks: includeLocation ? blocks : stripLocationDeep(blocks),
       unknownElements: content.unknownElements,
       notReadElements: content.notReadElements,
+      changeMarks: content.changeMarks,
     };
     result.references = { resolved: references, unresolved };
   }

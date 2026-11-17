@@ -271,6 +271,71 @@ describe('read_data_module', () => {
     expect(top!.location.path).toBe('/dmodule/content/procedure/mainProcedure/proceduralStep[1]');
   });
 
+  it('更新の理由・変更の印を返し、手順の textLocations は includeLocation: true のときだけ返す', async () => {
+    const xml = `<?xml version="1.0" encoding="UTF-8"?>
+<dmodule xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="http://www.s1000d.org/S1000D_7/xml_schema_flat/proced.xsd">
+<identAndStatusSection><dmAddress><dmIdent>
+  <dmCode modelIdentCode="KENBAIKI" systemDiffCode="A" systemCode="10" subSystemCode="2" subSubSystemCode="0" assyCode="00" disassyCode="00" disassyCodeVariant="A" infoCode="520" infoCodeVariant="B" itemLocationCode="A"/>
+  <language languageIsoCode="ja" countryIsoCode="JP"/><issueInfo issueNumber="002" inWork="01"/>
+</dmIdent></dmAddress><dmStatus issueType="changed"><reasonForUpdate id="rfu-0001" updateReasonType="urt02" updateHighlight="1"><simplePara>手順を足した。</simplePara></reasonForUpdate></dmStatus></identAndStatusSection>
+<content><procedure><mainProcedure>
+  <proceduralStep changeType="add" changeMark="1" reasonForUpdateRefIds="rfu-0001"><para>扉を開ける。</para><para changeType="modify" changeMark="1" reasonForUpdateRefIds="rfu-0001">鍵を回す。</para></proceduralStep>
+</mainProcedure></procedure></content></dmodule>`;
+    const plain = await call('read_data_module', { xml, csdbDirs: [fixtures] });
+    expect(plain.isError).toBe(false);
+    expect(plain.data.identAndStatus.reasonForUpdates).toEqual([
+      {
+        id: 'rfu-0001',
+        updateReasonType: 'urt02',
+        updateHighlight: '1',
+        paragraphs: ['手順を足した。'],
+      },
+    ]);
+    const step = plain.data.content.blocks[0];
+    expect(step.change).toEqual({
+      changeType: 'add',
+      changeMark: '1',
+      reasonForUpdateRefIds: ['rfu-0001'],
+    });
+    expect(step.text).toBe('扉を開ける。 鍵を回す。');
+    // 手順の text にまとめた段落の印は、節点が無いので changeMarks だけに入る（場所は includeLocation が無くても返す）
+    expect(
+      plain.data.content.changeMarks.map((m: { element: string; path: string }) => [
+        m.element,
+        m.path,
+      ]),
+    ).toEqual([
+      ['proceduralStep', '/dmodule/content/procedure/mainProcedure/proceduralStep'],
+      ['para', '/dmodule/content/procedure/mainProcedure/proceduralStep/para[2]'],
+    ]);
+    expect('location' in step).toBe(false);
+    expect('textLocations' in step).toBe(false);
+
+    const located = await call('read_data_module', {
+      xml,
+      csdbDirs: [fixtures],
+      includeLocation: true,
+    });
+    expect(
+      located.data.content.blocks[0].textLocations.map((l: { path: string }) => l.path),
+    ).toEqual([
+      '/dmodule/content/procedure/mainProcedure/proceduralStep/para[1]',
+      '/dmodule/content/procedure/mainProcedure/proceduralStep/para[2]',
+    ]);
+    expect(located.data._notes.some((n: string) => n.includes('textLocations'))).toBe(true);
+
+    // 概要にも changeMarks が付く。印の無い DM では空の配列
+    const outline = await call('read_data_module', {
+      xml,
+      csdbDirs: [fixtures],
+      section: 'outline',
+    });
+    expect(outline.data.content.changeMarks).toHaveLength(2);
+    const none = await call('read_data_module', { dmc: PROCED, csdbDirs: [fixtures] });
+    expect(none.data.content.changeMarks).toEqual([]);
+    expect(none.data.identAndStatus.reasonForUpdates).toBeUndefined();
+  });
+
   it('product 無し: 本文の構造と verification を返し、適用性は undetermined で displayText だけ', async () => {
     const r = await call('read_data_module', { dmc: PROCED, csdbDirs: [fixtures] });
     expect(r.isError).toBe(false);
