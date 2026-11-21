@@ -322,7 +322,21 @@ describe('read_data_module', () => {
       '/dmodule/content/procedure/mainProcedure/proceduralStep/para[1]',
       '/dmodule/content/procedure/mainProcedure/proceduralStep/para[2]',
     ]);
-    expect(located.data._notes.some((n: string) => n.includes('textLocations'))).toBe(true);
+    expect(located.data._notes.some((n: string) => n.includes('textLocations[i].path'))).toBe(true);
+
+    // 概要には textLocations を付けない。_notes は、付かないことと読み直し方を書く
+    const locatedOutline = await call('read_data_module', {
+      xml,
+      csdbDirs: [fixtures],
+      section: 'outline',
+      includeLocation: true,
+    });
+    const outlineStep = locatedOutline.data.content.outline[0];
+    expect(typeof outlineStep.location.path).toBe('string');
+    expect('textLocations' in outlineStep).toBe(false);
+    const outlineNotes = locatedOutline.data._notes.join(' ');
+    expect(outlineNotes).toContain('The outline has no "textLocations"');
+    expect(outlineNotes).not.toContain('textLocations[i].path');
 
     // 概要にも changeMarks が付く。印の無い DM では空の配列
     const outline = await call('read_data_module', {

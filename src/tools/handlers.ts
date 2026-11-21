@@ -354,7 +354,11 @@ async function readDataModule(args: Args) {
   const includeLocation = args.includeLocation === true;
   if (includeLocation && content)
     notes.push(
-      'includeLocation: every node carries "location" (path, line, column) in the document as it is now. Copy location.path as it is into s1000d-writer-mcp edit_data_module (at / to); do not build paths yourself. The paragraphs of a step that are joined into its "text" have no node of their own; the step carries "textLocations" instead, one location per joined paragraph in document order (textLocations[0] is the first paragraph of "text"). Use textLocations[i].path to remove or move that paragraph alone. A list item whose single paragraph is its "text" has no textLocations: edit the list item itself.',
+      'includeLocation: every node carries "location" (path, line, column) in the document as it is now. Copy location.path as it is into s1000d-writer-mcp edit_data_module (at / to); do not build paths yourself.',
+      // 手順の textLocations は、本文（content・all）のときだけ付く。outline には付けない
+      section === 'outline'
+        ? 'The outline has no "textLocations": the paragraphs joined into the "text" of a step have no location here. To remove or move such a paragraph alone, read again with section "content" or "all".'
+        : 'The paragraphs of a step that are joined into its "text" have no node of their own; the step carries "textLocations" instead, one location per joined paragraph in document order (textLocations[0] is the first paragraph of "text"). Use textLocations[i].path to remove or move that paragraph alone. A list item whose single paragraph is its "text" has no textLocations: edit the list item itself.',
     );
   const result: Record<string, unknown> = {
     target: status.target,

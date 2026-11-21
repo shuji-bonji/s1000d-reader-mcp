@@ -1,5 +1,17 @@
 # Changelog
 
+## 0.13.1 (2026-11-24)
+
+`read_data_module` の `includeLocation` の説明と `_notes` を、応答に合わせました。応答の項目は変わりません。
+
+### 変更（説明と `_notes` の文が変わります）
+
+- **手順の `textLocations` は、`section` が `content`・`all` のときだけ付きます。** これまでの説明と `_notes` は、`section: "outline"` のときにも付くように読めました（実際は、概要の節点には付きません）。`includeLocation` の説明に、概要には付かないことを書きました。`section: "outline"` と `includeLocation: true` の組では、`_notes` に、`textLocations` が付かないことと、手順の段落だけを取り除く・移すときは `content` か `all` で読み直すことを書きます。README（英・日）も合わせました。
+
+### テスト
+
+- 自作の DM のテストで、概要の節点に `textLocations` が無いことと、`_notes` の文を確かめるようにしました。
+
 ## 0.13.0 (2026-11-17)
 
 依存の `@shuji-bonji/s1000d-core` を `^0.14.0` に上げ、その読み取りに合わせました。次の版は 0.13.0 です（応答に項目が増えます。これまでの項目は変わりません）。
