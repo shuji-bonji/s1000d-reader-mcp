@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.14.1 (2026-11-24)
+
+`product` を渡さないときの `read_data_module` の `_notes` を、応答に合わせました。応答の項目と、適用性の判定は変わりません（hub の `eval/hosts/grok-build/reports/2026-11/FINDINGS.md` の F-08）。
+
+### 修正
+
+- `product` を渡さないとき、`_notes` は「applicability is "undetermined" everywhere」と書いていましたが、式（`assert`・`evaluate`）の無い、表示文だけの適用性は、製品が無くても `applicable`（`reason: "no expression (display text only)"`）になります。同じ応答の中で `_notes` と `identAndStatus.applicability.state` が食い違っていました。`_notes` を「式のある適用性は `undetermined`、表示文だけの適用性は判定するものが無いので `applicable`」に直しました。
+
 ## 0.14.0 (2026-11-24)
 
 依存の `@shuji-bonji/s1000d-core` を `^0.16.0` に上げました。このサーバーのコードは変えていませんが、core 0.16.0 が検証状態の参照の数え方を変えたので、`read_data_module`・`read_publication_module` などの `verification.references` が次のように変わります（Grok Build によるリファレンスとの照合で見つかりました。hub の `eval/hosts/grok-build/reports/2026-11/REFCHECK-FINDINGS.md` の R-09）。

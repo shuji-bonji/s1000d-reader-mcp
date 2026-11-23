@@ -437,6 +437,22 @@ describe('read_data_module', () => {
     expect(r.data.content).toBeUndefined();
   });
 
+  it('product なしでも、表示文だけの適用性は applicable で、_notes は「すべて undetermined」と書かない', async () => {
+    const r = await call('read_data_module', {
+      path: join(fixtures, 'DMC-KENBAIKI-A-10-20-00-00A-040A-D_002-01_JA-JP.XML'),
+      csdbDirs: [fixtures],
+      section: 'identAndStatus',
+    });
+    expect(r.data.identAndStatus.applicability).toMatchObject({
+      state: 'applicable',
+      reason: 'no expression (display text only)',
+    });
+    const notes = r.data._notes.join(' ');
+    expect(notes).toContain('No product was given');
+    expect(notes).toContain('display text only is "applicable"');
+    expect(notes).not.toContain('everywhere');
+  });
+
   it('無い DMC はエラー', async () => {
     const r = await call('read_data_module', {
       dmc: 'KENBAIKI-A-99-00-00-00A-040A-D',

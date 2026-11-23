@@ -346,7 +346,8 @@ async function readDataModule(args: Args) {
   const status = await verification(xml, verify, ctx, path);
   if (!product)
     notes.push(
-      'No product was given: applicability is "undetermined" everywhere. Call describe_applicability, then pass "product".',
+      // 式の無い（表示文だけの）適用性は、製品が無くても core が applicable と判定する。「すべて undetermined」とは書かない
+      'No product was given: applicability that has an expression (assert / evaluate) is "undetermined"; applicability with a display text only is "applicable", because there is nothing to evaluate. To evaluate the expressions, call describe_applicability, then pass "product".',
     );
 
   const content = section === 'identAndStatus' ? undefined : readContentFromXml(xml);
