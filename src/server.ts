@@ -2,7 +2,7 @@
  * s1000d-reader-mcp の組み立て。index.ts は起動だけを担い、テストからはこの関数を直接叩く。
  */
 import { McpServer, fromJsonSchema } from '@modelcontextprotocol/server';
-import { ENV, PACKAGE_INFO } from './config.js';
+import { ENV, PACKAGE_INFO, SERVER_INFO } from './config.js';
 import { tools } from './tools/definitions.js';
 import { toolHandlers } from './tools/handlers.js';
 import { ToolInputError } from './errors.js';
@@ -32,7 +32,21 @@ Costly options: read_data_module with verify="full" runs BREX checks (about 0.1 
 
 Budget: on a large data module call read_data_module with section "outline" first. It returns headings, step numbers, the first sentence of each and the size of each subtree (nodes / chars / warnings), without the body or the references; content.size says how big the full body is. Then read section "content" (optionally with maxNodes) once you know what you need.
 
-An input the server cannot use comes back as {"error": {"code": "...", "path": "/path", "detail": "..."}} (not as a tool failure), in the same shape as s1000d-writer-mcp. code is "file-not-found" (the file at that argument does not exist), "no-csdb" (no CSDB folder exists; pass "csdbDirs"), "not-found" (the DMC, PMC or ICN is not in the CSDB) or "input-error" (the argument is malformed or missing). path names the argument to fix. Fix it and call again.`;
+An input the server cannot use comes back as {"error": {"code": "...", "path": "/path", "detail": "..."}} (not as a tool failure), in the same shape as s1000d-writer-mcp. code is "file-not-found" (the file at that argument does not exist), "no-csdb" (no CSDB folder exists; pass "csdbDirs"), "not-found" (the DMC, PMC or ICN is not in the CSDB) or "input-error" (the argument is malformed or missing). path names the argument to fix. Fix it and call again.
+
+Every response ends with "_server": {"name", "version", "core"}: the package name and version of the server that answered, and the version of @shuji-bonji/s1000d-core it has loaded. They describe the running process, not what is installed on disk. If they differ from the versions you expect (for example, a version published after the host was started), the host is still running an older process and must be restarted.`;
+
+/**
+ * 応答の本文を JSON の文字列にする。最後の項目に、答えたサーバーの名前と版、読み込んだ core の版を足す（D-38）。
+ * 成功・想定内の失敗・想定外の失敗のすべての応答がここを通る。
+ */
+function responseText(body: unknown): string {
+  const obj =
+    body && typeof body === 'object' && !Array.isArray(body)
+      ? (body as Record<string, unknown>)
+      : { result: body };
+  return JSON.stringify({ ...obj, _server: SERVER_INFO }, null, 2);
+}
 
 export function buildServer(): McpServer {
   const server = new McpServer(
@@ -51,16 +65,16 @@ export function buildServer(): McpServer {
       async (args) => {
         try {
           const result = await handler(args as Record<string, unknown>);
-          return { content: [{ type: 'text' as const, text: JSON.stringify(result, null, 2) }] };
+          return { content: [{ type: 'text' as const, text: responseText(result) }] };
         } catch (error) {
           // 呼び出し側が直せる、想定内の失敗は isError にせず、writer と同じ形で返す
           if (error instanceof ToolInputError) {
             const body = { error: { code: error.code, path: error.path, detail: error.detail } };
-            return { content: [{ type: 'text' as const, text: JSON.stringify(body, null, 2) }] };
+            return { content: [{ type: 'text' as const, text: responseText(body) }] };
           }
           const message = error instanceof Error ? error.message : String(error);
           return {
-            content: [{ type: 'text' as const, text: JSON.stringify({ error: message }, null, 2) }],
+            content: [{ type: 'text' as const, text: responseText({ error: message }) }],
             isError: true,
           };
         }

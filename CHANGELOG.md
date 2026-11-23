@@ -1,8 +1,12 @@
 # Changelog
 
-## 0.14.1 (2026-11-24)
+## 0.15.0 (2026-11-24)
 
-`product` を渡さないときの `read_data_module` の `_notes` を、応答に合わせました。応答の項目と、適用性の判定は変わりません（hub の `eval/hosts/grok-build/reports/2026-11/FINDINGS.md` の F-08）。
+依存の `@shuji-bonji/s1000d-core` を `^0.17.0` に上げました（`CORE_INFO` を持つ版です）。 公開していない 0.14.1 の修正（`product` を渡さないときの `_notes`）も、この版に含めました。
+
+### 追加
+
+- **すべてのツールの応答の最後に、`_server`（`name`・`version`・`core`）を足しました。** 答えたサーバーのパッケージ名と版、実際に読み込んでいる s1000d-core の版です。成功の応答、想定内の失敗（`{"error": …}`）、想定外の失敗（`isError: true`）のすべてに付きます。ホストが古いプロセスのまま動いているときに、応答から見分けるためです（hub の DECISIONS の D-38、Issue [shuji-bonji/s1000d-stack#12](https://github.com/shuji-bonji/s1000d-stack/issues/12)）。成功の応答の、これまでの項目と順番は変わりません。結果がオブジェクトでないときは `{"result": …, "_server": …}` にします。サーバーの instructions にも `_server` の意味を書きました。
 
 ### 修正
 
