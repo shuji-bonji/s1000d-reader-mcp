@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.14.0 (2026-11-24)
+
+依存の `@shuji-bonji/s1000d-core` を `^0.16.0` に上げました。このサーバーのコードは変えていませんが、core 0.16.0 が検証状態の参照の数え方を変えたので、`read_data_module`・`read_publication_module` などの `verification.references` が次のように変わります（Grok Build によるリファレンスとの照合で見つかりました。hub の `eval/hosts/grok-build/reports/2026-11/REFCHECK-FINDINGS.md` の R-09）。
+
+### 変更（応答が変わります）
+
+- **`verification.references` は、仕様書（モデル識別コード `S1000D`）への `dmRef` を未解決に数えません。** `unresolvedCount` と `state` は仕様書への参照を除いて決まり、その件数は `specificationReferences`（1 件以上のときだけ付く）に出ます。未解決が仕様書への参照だけの DM は `state` が `resolved` になります。s1000d-verify-mcp 0.9.0・s1000d-writer-mcp 0.7.0 と同じ数え方です。
+
 ## 0.13.1 (2026-11-24)
 
 `read_data_module` の `includeLocation` の説明と `_notes` を、応答に合わせました。応答の項目は変わりません。
