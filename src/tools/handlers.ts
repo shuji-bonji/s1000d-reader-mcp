@@ -274,7 +274,7 @@ async function listDataModules(args: Args) {
               issueDate: dml.value.issueDate,
               issueType: dml.value.issueType,
               entryCount: rec.entryCount,
-              reconciliation: { ...rec.counts, notListed: rec.notListed.length },
+              reconciliation: { ...rec.counts, notListedCount: rec.notListed.length },
             };
           } else row.error = dml.error;
         } else {
@@ -318,7 +318,7 @@ async function listDataModules(args: Args) {
       ...configNotes(ctx),
       ...(include.has('dml') || include.has('ddn')
         ? [
-            'DML / DDN rows carry "reconciliation" (found / issue-mismatch / not-found / not-checked, and for a DML the count of DMs and PMs the DML does not list). For the per-entry result use reconcile_dml in s1000d-verify-mcp.',
+            'DML / DDN rows carry "reconciliation" (found / issue-mismatch / not-found / not-checked, and for a DML "notListedCount": the number of DMs and PMs the DML does not list — the same name as in reconcile_dml). For the per-entry result use reconcile_dml in s1000d-verify-mcp.',
           ]
         : []),
     ],
@@ -364,7 +364,13 @@ async function readDataModule(args: Args) {
   const result: Record<string, unknown> = {
     target: status.target,
     securityClassification: securitySummary(
-      info.identAndStatus?.securityClassification,
+      // dmodule 以外（comment の commentStatus など）は、状態部の security から読む
+      info.identAndStatus?.securityClassification ??
+        (defaultXmlEngine.selectString(
+          '/*/identAndStatusSection/*/security/@securityClassification',
+          doc,
+        ) ||
+          undefined),
       content?.blocks ?? [],
     ),
     identAndStatus:

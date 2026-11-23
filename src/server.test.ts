@@ -99,7 +99,7 @@ describe('list_data_modules', () => {
         'issue-mismatch': 1,
         'not-found': 1,
         'not-checked': 0,
-        notListed: 3,
+        notListedCount: 3,
       },
     });
     const ddn = r.data.objects.find((o: { kind: string }) => o.kind === 'ddn');
@@ -179,6 +179,25 @@ describe('list_data_modules', () => {
 });
 
 describe('read_data_module', () => {
+  it('comment は、commentStatus の security から securityClassification を読む（Grok Build の所見 F-09）', async () => {
+    const xml = `<?xml version="1.0" encoding="UTF-8"?>
+<comment xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="http://www.s1000d.org/S1000D_7/xml_schema_flat/comment.xsd">
+  <identAndStatusSection>
+    <commentAddress>
+      <commentIdent>
+        <commentCode modelIdentCode="KENBAIKI" senderIdent="K0001" yearOfDataIssue="2026" seqNumber="00001" commentType="q"/>
+        <language languageIsoCode="ja" countryIsoCode="JP"/>
+      </commentIdent>
+      <commentAddressItems><commentTitle>確認</commentTitle><issueDate year="2026" month="11" day="24"/></commentAddressItems>
+    </commentAddress>
+    <commentStatus><security securityClassification="03"/></commentStatus>
+  </identAndStatusSection>
+  <commentContent><simplePara>確認してください。</simplePara></commentContent>
+</comment>`;
+    const r = await call('read_data_module', { xml, verify: 'none', csdbDirs: [fixtures] });
+    expect(r.data.securityClassification.dataModule).toBe('03');
+    expect(r.data.securityClassification.note).not.toMatch(/declares no securityClassification/);
+  });
   it('応答の先頭に securityClassification（DM の値と本文の要素の値）が必ず付き、本文には size が付く', async () => {
     const r = await call('read_data_module', { dmc: PROCED, csdbDirs: [fixtures] });
     expect(Object.keys(r.data).slice(0, 2)).toEqual(['target', 'securityClassification']);

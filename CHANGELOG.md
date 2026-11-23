@@ -1,5 +1,21 @@
 # Changelog
 
+## 0.16.0 (2026-11-24)
+
+Grok Build の試用（2026-11-05）の所見のうち、未確認だった 2 件を直しました（hub の `eval/hosts/grok-build/reports/2026-11/FINDINGS.md` の F-09・F-11）。
+
+### 変更（応答の項目名が変わります）
+
+- **`list_data_modules` の DML の行の `reconciliation.notListed`（件数）を、`reconciliation.notListedCount` にしました。** s1000d-verify-mcp の `reconcile_dml` は、同じ件数を `notListedCount`、行の一覧を `notListed` と呼んでいます。同じ名前が、こちらでは数、verify では配列を指していました。`found`・`issue-mismatch`・`not-found`・`not-checked` は変わりません。
+
+### 修正
+
+- **`read_data_module` でコメント（ルートが `comment`）を読むと、`securityClassification.dataModule` が無く、`note` が「The document declares no securityClassification in its status section.」になっていました。** `commentStatus/security` に値があっても同じでした。識別・状態部から値が取れないときは、状態部（`commentStatus` など）の `security/@securityClassification` を読むようにしました。データモジュールの応答は変わりません。
+
+### テスト
+
+- 自作のコメントで、`securityClassification.dataModule` が `commentStatus` の値になることを確かめるテストを足しました。
+
 ## 0.15.0 (2026-11-24)
 
 依存の `@shuji-bonji/s1000d-core` を `^0.17.0` に上げました（`CORE_INFO` を持つ版です）。 公開していない 0.14.1 の修正（`product` を渡さないときの `_notes`）も、この版に含めました。
